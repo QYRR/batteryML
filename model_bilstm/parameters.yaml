@@ -1,0 +1,17 @@
+dataset: nasa
+
+features:
+  - voltage       # Voltage feature
+  - current  # Discharge power feature
+  - temperature
+  - relativeTime
+
+labels:
+  - capacity         # Model output: State of Health (SOH)
+
+data_groupby:
+  - cycle
+
+time_window: 40
+
+n_trials: 10

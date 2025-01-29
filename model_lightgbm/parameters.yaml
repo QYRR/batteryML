@@ -1,0 +1,36 @@
+dataset: nasa
+
+features:
+  - voltage       # Voltage feature
+  - temperature
+  # - power
+  # - current
+  # - discharge_power_rate  # Discharge power feature
+  # - discharge_current_rate
+  - discharge_voltage_rate
+  # - sum_relativeTime
+  # - range_voltage
+  # - range_current
+  # - range_temperature
+  # - step_length
+  # - duration
+  # - delta_current
+  # - delta_voltage
+  # - delta_temperature
+
+
+labels:
+  - capacity         # Model output: State of Health (SOH)
+
+data_groupby:
+  - cycle
+  - capacity
+
+num_trials: 500  # Number of trials for hyperparameter optimization
+
+overlap_mode: all         # Overlap mode for time windows
+
+split_size: 20            # Size of each subgroup
+multi_split_size: [5,10,15,20,40,50,70,100]
+
+num_restricted: 20        # Use the first <n> samples in a time window
