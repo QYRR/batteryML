@@ -22,32 +22,27 @@ def compute_features(group: pd.DataFrame, features: list, labels: list) -> pd.Da
     group = group.copy()
 
     # compute the column
-    group['relativeTime'] = group.relativeTime - group.relativeTime.iloc[0]
-    group['discharge_rate'] = (group.SOC.diff()/group.relativeTime.diff()).astype("float")
-    group['power'] = group.current * group.voltage
-    group['discharge_power_rate'] = (group.power.diff()/group.relativeTime.diff()).astype("float")
-    group['discharge_voltage_rate'] = (group.voltage.diff()/group.relativeTime.diff()).astype("float")
-    group['discharge_current_rate'] = (group.current.diff()/group.relativeTime.diff()).astype("float")
+    group['relativeTime'] = (group.relativeTime - group.relativeTime.iloc[0]).astype(np.float32)
+    # group['discharge_rate'] = (group.SOC.diff()/group.relativeTime.diff()).astype("float")
+    group['power'] = (group.current * group.voltage).astype(np.float32)
+    group['discharge_power_rate'] = (group.power.diff()/group.relativeTime.diff()).astype(np.float32)
+    group['discharge_voltage_rate'] = (group.voltage.diff()/group.relativeTime.diff()).astype(np.float32)
+    group['discharge_current_rate'] = (group.current.diff()/group.relativeTime.diff()).astype(np.float32)
+    # group['discharge_energy_rate'] = (group.energy.diff()/group.relativeTime.diff()).astype(np.float32)
 
-    group['duration'] = group['relativeTime'].iloc[-1] - group['relativeTime'].iloc[0]
+    group['duration'] = (group['relativeTime'].iloc[-1] - group['relativeTime'].iloc[0]).astype(np.float32)
     group['step_length'] = len(group)
-    group['sum_relativeTime'] = group['relativeTime'].sum()
-    
-    # group['range_voltage'] = group['voltage'].max() - group['voltage'].min()
-    # group['range_current'] = group['current'].max() - group['current'].min()
-    # group['range_temperature'] = group['temperature'].max() - group['temperature'].min()
-
-    # group['delta_current'] = np.concatenate([[0], cumulative_trapezoid(group['current'].values, x=group['relativeTime'].values)]) / 3600.0
-    # group['delta_voltage'] = np.concatenate([[0], cumulative_trapezoid(group['voltage'].values, x=group['relativeTime'].values)]) / 3600.0
-    # group['delta_temperature'] = np.concatenate([[0], cumulative_trapezoid(group['temperature'].values, x=group['relativeTime'].values)]) / 3600.0
+    group['sum_relativeTime'] = (group['relativeTime'].sum()).astype(np.float32)
 
     for col_name in ['current', 'voltage', 'temperature']:
-        group[f'range_{col_name}'] = group[col_name].max() - group[col_name].min()
-        group[f'delta_{col_name}'] = np.concatenate([[0], cumulative_trapezoid(group[col_name].values, x=group['relativeTime'].values)]) / 3600.0
+        group[f'range_{col_name}'] = (group[col_name].max() - group[col_name].min()).astype(np.float32)
+        group[f'delta_{col_name}'] = (np.concatenate([[0], cumulative_trapezoid(group[col_name].values, x=group['relativeTime'].values)]) / 3600.0).astype(np.float32)
 
     # calculate the mean value of all columns in this group
-    output_list = ['cycle', 'SOC']+features+labels
-    output_list = pd.Series(output_list).drop_duplicates().tolist()
+    base_cols = ['cycle']
+    # output_list = output_list.append('SOC')
+    output_list = list({*base_cols, *features, *labels})
+    # output_list = pd.Series(output_list).drop_duplicates().tolist()
     result_df = group[output_list].mean().to_frame().T
 
     return result_df
@@ -74,25 +69,27 @@ def split_helper(data: pd.DataFrame, data_groupby: list, features: list, labels:
         partial_train = partial(process_func, features=features, labels=labels)
         train = split_helper(train, features, labels, partial_train)
     """
-    data = data.copy()
-    t = pd.DataFrame()
+    all_results = []
+
+    # select the useful columns
+    base_cols = ['cycle', 'voltage', 'current', 'relativeTime', 'temperature']
+    # base_cols.append('energy')
+    # base_cols.append('SOH')
+    col_list = list({*base_cols, *labels})  # drop the repeated elements
 
     for idx, group in data.groupby(data_groupby):
         if group.empty:
             print("Empty data!!!")
             continue
 
-        # select the useful columns
-        col_list = ['cycle','SOH','voltage','current','SOC','relativeTime','temperature']+labels
-        col_list = pd.Series(col_list).drop_duplicates().tolist()
-        group = group[col_list]
-        
-        group = group.sort_values(by='relativeTime', ascending=True)
+        group = group[col_list].copy()       
+        # group = group.sort_values(by='relativeTime', ascending=True)
 
-        result_df = pd.DataFrame()
         if split_group_func is None:
             # directly apply the feature extraction if not split this group
-            result_df = compute_features(group, features, labels)
+            result = compute_features(group, features, labels)
+            if not result.empty:
+                all_results.append(result)
         else:
             # call a function to split the group data in this time window
             # this function will return a <list> contains the splited group
@@ -100,14 +97,11 @@ def split_helper(data: pd.DataFrame, data_groupby: list, features: list, labels:
 
             # do the feature extraction for each part in this group            
             for df in splits_list:
-                processed_df = compute_features(df, features, labels)
-                result_df = pd.concat([result_df, processed_df], ignore_index=True)
+                result = compute_features(df, features, labels)
+                if not result.empty:
+                    all_results.append(result)
 
-        # concatenate the process result of each group
-        t = pd.concat([t, result_df], ignore_index=True)
-        t = t.sort_values(by='cycle', ascending=True)
-
-    return t
+    return pd.concat(all_results, ignore_index=True)
 
 
 

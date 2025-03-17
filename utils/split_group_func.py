@@ -61,7 +61,7 @@ def split_with_overlap_all(group: pd.DataFrame, split_size: int, overlap_percent
 
 def split_without_overlap(group: pd.DataFrame, split_size: int) -> List[pd.DataFrame]:
     length = len(group)
-    num_splits = round(length / split_size)  # Calculate number of splits
+    num_splits = math.floor(length / split_size)  # Calculate number of splits
 
     splits = []
     start = 0

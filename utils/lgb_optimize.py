@@ -16,9 +16,9 @@ def lgb_optimize(trial, x, y, vx, vy):
 
     """
     lgbm_params = {
-        # 'objective': 'regression',
-        'objective': 'huber',
-        'alpha': 0.8,  # 控制切换点，通常取值在 (0.8, 0.95)
+        'objective': 'regression',
+        # 'objective': 'huber',
+        # 'alpha': 0.8,  # (0.8, 0.95)
         'metric': 'mae',
         'boosting_type': 'gbdt',
         'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.3),

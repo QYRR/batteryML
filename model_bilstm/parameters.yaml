@@ -1,17 +1,26 @@
+# # =============== stanford =======================
+# dataset: stanford          # select one
+# labels:
+#   - SOH
+# # =============== stanford =======================
+
+# =============== nasa =======================
 dataset: nasa
+labels:
+  - capacity
+# =============== nasa =======================
 
 features:
   - voltage       # Voltage feature
-  - current  # Discharge power feature
+  - current  
   - temperature
   - relativeTime
-
-labels:
-  - capacity         # Model output: State of Health (SOH)
 
 data_groupby:
   - cycle
 
-time_window: 40
+sequence_length: 50
 
-n_trials: 10
+n_trials: 30
+
+ 
