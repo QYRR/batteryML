@@ -17,8 +17,7 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-random_seed = 42
-np.random.seed(random_seed)
+tf.keras.utils.set_random_seed(42)
 
 
 # ==================== FUNCTION ====================
