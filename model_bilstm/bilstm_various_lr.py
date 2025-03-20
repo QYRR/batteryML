@@ -189,6 +189,7 @@ def main(args):
 
 
     # fit the model ====================
+    tf.keras.utils.set_random_seed(42)
     history = final_model.fit(
         train_samples,
         train_targets,
@@ -219,7 +220,7 @@ def main(args):
     model_save_folder = Path(f'model_bilstm/model_{params.dataset}')
     model_save_folder.mkdir(parents=True, exist_ok=True)
     # generate model name based on test MAE
-    mae_decimal_part = f"{test_mae:.4f}".split('.')[1]    
+    mae_decimal_part = f"{test_mae:.8f}".split('.')[1]    
     model_name = f'{params.dataset}_len{params.sequence_length}_{int(test_mae)}_{mae_decimal_part}.keras'
     final_model.save(model_save_folder/model_name)
     print(f'already saved into {model_save_folder/model_name}')
