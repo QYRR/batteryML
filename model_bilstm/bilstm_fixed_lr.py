@@ -14,8 +14,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
-random_seed = 42
-np.random.seed(random_seed)
+tf.keras.utils.set_random_seed(42)
 
 
 # ==================== FUNCTION ====================
