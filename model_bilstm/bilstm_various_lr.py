@@ -36,6 +36,7 @@ def bilstm_optmize(trial,train_samples,train_targets,valid_samples,valid_targets
     batch_size = trial.suggest_categorical('batch_size', [16, 32, 64, 128, 256])
 
     # Build the model
+    tf.keras.utils.set_random_seed(42)
     model = create_bilstm_model(hidden_size, learning_rate,input_shape)
     
     # Train the model (shorter epochs for speed in HPO)
@@ -164,8 +165,8 @@ def main(args):
 
 
     # get the best parameters ====================
-    study = optuna.create_study(direction='minimize')
     input_shape = (params.sequence_length, len(params.features))
+    study = optuna.create_study(direction='minimize')
     study.optimize(
         lambda trial: bilstm_optmize(trial,train_samples,train_targets,valid_samples,valid_targets,input_shape),
         n_trials=params.n_trials,    # e.g., 10 trials; increase as needed
@@ -176,7 +177,7 @@ def main(args):
     print(f"Best hyperparameters: {best_params}")
 
     # create BiLSTM model ====================
-    hidden_size = 14
+    hidden_size = 14    
     learning_rate = best_params['learning_rate']
     batch_size = best_params['batch_size']
 
@@ -226,7 +227,7 @@ def main(args):
 
     # save the result ====================
     # check the csv file exists or not
-    filename = 'result_new.csv'
+    filename = 'result_new1.csv'
     if not os.path.exists(f'model_bilstm/{filename}'):
         columns = [
             'Date', 
