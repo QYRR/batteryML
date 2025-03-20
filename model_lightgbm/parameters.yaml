@@ -38,7 +38,7 @@ features:
 data_groupby:
   - cycle
 
-num_trials: 2000  # Number of trials for hyperparameter optimization
+num_trials: 200  # Number of trials for hyperparameter optimization
 
 overlap_mode: 'no'         # Overlap mode for time windows
 
@@ -46,6 +46,7 @@ split_size: 20            # Size of each subgroup
 
 # multi_split_size: [10,20,30,50,70,100]
 multi_split_size: [5,10,15,20,30,40,50,70,100]
+# multi_split_size: [5,10,20,30,50]
 # multi_split_size: [3,5,7,10,15,20,30,40,50,70,100,130]
 
 num_restricted: 20        # Use the first <n> samples in a time window
