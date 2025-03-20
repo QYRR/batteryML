@@ -166,6 +166,7 @@ def main(args):
 
     # get the best parameters ====================
     study = optuna.create_study(direction='minimize')
+    input_shape = (params.sequence_length, len(params.features))
     study.optimize(
         lambda trial: bilstm_optmize(trial,train_samples,train_targets,valid_samples,valid_targets,input_shape),
         n_trials=params.n_trials,    # e.g., 10 trials; increase as needed
@@ -177,7 +178,6 @@ def main(args):
 
     # create BiLSTM model ====================
     hidden_size = 14
-    input_shape = (params.sequence_length, len(params.features))
     learning_rate = best_params['learning_rate']
     batch_size = best_params['batch_size']
 
