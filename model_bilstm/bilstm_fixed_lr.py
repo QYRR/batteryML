@@ -133,8 +133,8 @@ def main(args):
 
     # selected learning rate and batch size from validation result
     if params.sequence_length==5:
-        learning_rate = 0.006962677097559403
-        batch_size = 32
+        learning_rate = 0.007532869501076525
+        batch_size = 16
     if params.sequence_length==10:
         learning_rate = 0.006386744479933583
         batch_size = 32
@@ -194,7 +194,7 @@ def main(args):
 
     # save the result ====================
     # check the csv file exists or not
-    filename = 'result_new.csv'
+    filename = 'result_new1.csv'
     if not os.path.exists(f'model_bilstm/{filename}'):
         columns = [
             'Date', 
