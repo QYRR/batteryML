@@ -1,7 +1,5 @@
 import os
 import sys
-import sys
-import os
 import psutil
 import numpy as np
 import time
@@ -66,10 +64,10 @@ def get_least_active_cores(num_cores, num_readings=10):
     return least_active_cores
 
 SEED = 0
-os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
+# os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+# os.environ["CUDA_VISIBLE_DEVICES"] = ""
 np.random.seed(SEED)
-set_cores(8)
+# set_cores(8)
 
 import csv
 import math
@@ -237,20 +235,20 @@ def lgb_optimize(trial, x, y, vx, vy):
 
     """
     lgbm_params = {
-    'objective': 'regression',
-    'metric': 'mae',
-    'verbosity': -1,
-    'boosting_type': 'gbdt',
-    'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.1, log=True),
-    'max_depth': trial.suggest_int('max_depth', 3, 20),
-    'num_leaves': trial.suggest_int('num_leaves', 10, 200),
-    'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
-    'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),
-    'n_estimators': trial.suggest_int('n_estimators', 50, 500),
-    'min_child_samples': trial.suggest_int('min_child_samples', 5, 50),
-    'colsample_bytree': trial.suggest_float('colsample_bytree', 0.1, 1.0),
-    'verbose': -1,
-    'seed': SEED
+        'objective': 'regression',
+        'metric': 'mae',
+        'verbosity': -1,
+        'boosting_type': 'gbdt',
+        'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.1, log=True),
+        'max_depth': trial.suggest_int('max_depth', 3, 20),
+        'num_leaves': trial.suggest_int('num_leaves', 10, 200),
+        'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
+        'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),
+        'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+        'min_child_samples': trial.suggest_int('min_child_samples', 5, 50),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.1, 1.0),
+        'verbose': -1,
+        'seed': SEED
     }
 
 
@@ -290,16 +288,19 @@ def objective(trial, xtrain, ytrain, xvalid, yvalid):
     # Suggest hyperparameters for LightGBM
     param = {
         'objective': 'regression',
-        'metric': 'rmse',
+        'metric': 'mae',
         'verbosity': -1,
         'boosting_type': 'gbdt',
-        'learning_rate': trial.suggest_float('learning_rate', 0.00001, 0.7),
-        # 'num_leaves': trial.suggest_int('num_leaves', 2, 50),
-        'max_depth': trial.suggest_int('max_depth', 1, 20),
-        'reg_alpha': trial.suggest_float('reg_alpha', 0.0000, 10.0),
-        'reg_lambda': trial.suggest_float('reg_lambda', 0.0000, 10.0),
-        'n_estimators' : trial.suggest_int('n_estimators', 50, 700),
-        'verbose': -1
+        'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.1, log=True),
+        'max_depth': trial.suggest_int('max_depth', 3, 20),
+        'num_leaves': trial.suggest_int('num_leaves', 10, 200),
+        'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
+        'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),
+        'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+        'min_child_samples': trial.suggest_int('min_child_samples', 5, 50),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.1, 1.0),
+        'verbose': -1,
+        'seed': SEED
     }
     
     # Create dataset for LightGBM, focusing on selected features
@@ -525,14 +526,14 @@ def main(args):
 
 
     # select the most important features ====================
-    selected_features =  [
-        'discharge_voltage_rate',
-        'voltage', 
-        'temperature', 
-        'power'
-    ]
-    # model_list, selected_feature = select_features(x, y, vx, vy, test_x, test_y)
-    # selected_features =  selected_feature[:4]
+    # selected_features =  [
+    #     'discharge_voltage_rate',
+    #     'voltage', 
+    #     'temperature', 
+    #     'power'
+    # ]
+    model_list, selected_feature = select_features(x, y, vx, vy, test_x, test_y)
+    selected_features =  selected_feature[:4]
     # update the samples
     x = train[selected_features]
     vx = valid[selected_features]
@@ -546,12 +547,12 @@ def main(args):
     best_hyperparameters = study_nasa.best_params
     print(f"Best hyperparameters: {best_hyperparameters}")
     lgbm_params = {
-    'objective': 'regression',
-    'metric': 'mae',
-    'verbosity': -1,
-    'boosting_type': 'gbdt',
-    'verbose': -1,
-    'seed': SEED
+        'objective': 'regression',
+        'metric': 'mae',
+        'verbosity': -1,
+        'boosting_type': 'gbdt',
+        'verbose': -1,
+        'seed': SEED
     }
     best_hyperparameters.update(lgbm_params)
 
@@ -577,7 +578,7 @@ def main(args):
     pred = best_model.predict(test_x, verbose=0)
     test_loss = mean_absolute_error(test_y, pred)
     test_mae = mean_absolute_error(test_y, pred)
-    r2 = r2_score(test_y, pred)
+    r2_test = r2_score(test_y, pred)
 
     print(f"Final Training Loss (MAE): {final_train_loss}, MAE: {final_train_mae}")
     print(f"Final Validation Loss (MAE): {final_valid_loss}, MAE: {final_valid_mae}")
@@ -615,12 +616,13 @@ def main(args):
 
     # save the result ====================
     # check the csv file exists or not
-    filename = 'result_new.csv'
+    filename = 'result_new1.csv'
     if not os.path.exists(f'model_lightgbm/{filename}'):
         columns = [
             'Date', 
             'dataset', 
             'model_name', 
+            'test_wlen',
             'sequence_length',
             'n_features', 
             'features',
@@ -633,9 +635,12 @@ def main(args):
             'r2',
             'learning_rate',
             'max_depth', 
+            'num_leaves',
             'reg_alpha', 
             'reg_lambda', 
-            'n_estimators'
+            'n_estimators',
+            'min_child_samples',
+            'colsample_bytree'
         ]
         df = pd.DataFrame(columns=columns)
         df.to_csv(f'model_lightgbm/{filename}', index=False)
@@ -649,6 +654,7 @@ def main(args):
         np.datetime64("now", "m"),      # date
         params.dataset,                 # dataset
         model_name,                     # model_name
+        params.test_wlen,
         json.dumps(params.multi_split_size),         # seq_len
         f'{len(selected_features)}',    # n_features
         json.dumps(selected_features),  # features
@@ -658,12 +664,15 @@ def main(args):
         final_valid_mae,
         test_loss,                      # test_loss
         test_mae,                       # test_mae
-        r2,
+        r2_test,
         best_hyperparameters['learning_rate'],
         best_hyperparameters['max_depth'],
+        best_hyperparameters['num_leaves'],
         best_hyperparameters['reg_alpha'],
         best_hyperparameters['reg_lambda'],
         best_hyperparameters['n_estimators'],
+        best_hyperparameters['min_child_samples'],
+        best_hyperparameters['colsample_bytree']
     ]
 
     # write the new record into csv file

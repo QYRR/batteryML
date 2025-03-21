@@ -15,7 +15,7 @@ venv_python = os.path.join(venv_abs_path, "bin", "python3") if sys.platform != "
     else os.path.join(venv_abs_path, "Scripts", "python.exe")
 
 # Target script path
-target_script = os.path.join(current_script_dir, "bilstm.py")
+target_script = os.path.join(current_script_dir, "bilstm_various_lr.py")
 
 # ================= Path Validation =================
 def validate_paths():
@@ -36,7 +36,7 @@ def validate_paths():
 def run_experiments(parameters):
     """Run experiments iterating through parameters"""
     for param in parameters:
-        exec_times = 10
+        exec_times = 2
         for i in range(exec_times):
             print(f"\n=== Parameter {param}, Run {i+1}/{exec_times} started ===")
             
@@ -97,7 +97,7 @@ try:
     print(f"Current working directory: {os.getcwd()}")
     
     # Run parameter experiments
-    parameters = [5, 10, 20, 30, 50]
+    parameters = [20]
     run_experiments(parameters)
     
 except Exception as e:
