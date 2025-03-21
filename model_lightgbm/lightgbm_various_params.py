@@ -1,5 +1,76 @@
 import os
 import sys
+import sys
+import os
+import psutil
+import numpy as np
+import time
+
+def set_cores(n_cores):
+    """
+    Set the CPU cores to use for the current process.
+
+    Parameters
+    ----------
+    n_cores : int
+        n_cores: Number of cores to use.
+    """
+
+    # Get the least active cores
+    least_active_cores = get_least_active_cores(n_cores)
+
+    # Set the least active cores to use
+    limit_cpu_cores(least_active_cores)
+
+
+def limit_cpu_cores(cores_to_use):
+
+    num_cores = len(cores_to_use)
+
+    pid = os.getpid()  # the current process
+
+    available_cores = list(range(psutil.cpu_count()))
+    # selected_cores = available_cores[:num_cores]
+    selected_cores = []
+    for ii in cores_to_use:
+        if ii in available_cores:
+            selected_cores.append(ii)
+
+    os.sched_setaffinity(pid, selected_cores)
+
+    # Limit the number of threads used by different libraries
+    os.environ["OMP_NUM_THREADS"] = str(num_cores)
+    os.environ["MKL_NUM_THREADS"] = str(num_cores)
+
+
+def get_least_active_cores(num_cores, num_readings=10):
+
+    # Get CPU usage for each core for multiple readings
+    cpu_usage_readings = []
+    for ii in range(num_readings):
+        cpu_usage_readings.append(psutil.cpu_percent(percpu=True))
+        time.sleep(0.05)
+
+    # Calculate the average CPU usage for each core
+    avg_cpu_usage = [sum(usage) / num_readings for usage in zip(*cpu_usage_readings)]
+
+    # Create a list of tuples (core_index, avg_cpu_usage)
+    core_usage_tuples = list(enumerate(avg_cpu_usage))
+
+    # Sort the list based on average CPU usage
+    sorted_cores = sorted(core_usage_tuples, key=lambda x: x[1])
+
+    # Get the first 'num_cores' indices (least active cores)
+    least_active_cores = [index for index, _ in sorted_cores[:num_cores]]
+
+    return least_active_cores
+
+SEED = 0
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
+np.random.seed(SEED)
+set_cores(8)
+
 import csv
 import math
 import time
@@ -16,7 +87,6 @@ import pandas as pd
 from scipy.integrate import cumulative_trapezoid
 
 import lightgbm as lgb
-import tensorflow as tf
 import optuna
 
 from sklearn.metrics import (
@@ -33,7 +103,6 @@ import yaml
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-tf.keras.utils.set_random_seed(42)
 
 
 # ==================== FUNCTION ====================
@@ -168,20 +237,23 @@ def lgb_optimize(trial, x, y, vx, vy):
 
     """
     lgbm_params = {
-        'objective': 'regression',
-        'metric': 'rmse',
-        'verbosity': -1,
-        'boosting_type': 'gbdt',
-        'learning_rate': trial.suggest_float('learning_rate', 0.00001, 0.7),
-        'max_depth': trial.suggest_int('max_depth', 1, 20),
-        'reg_alpha': trial.suggest_float('reg_alpha', 0.0000, 10.0),
-        'reg_lambda': trial.suggest_float('reg_lambda', 0.0000, 10.0),
-        'n_estimators' : trial.suggest_int('n_estimators', 50, 700),
-        'verbose': -1
-        # Add more hyperparameters to optimize
+    'objective': 'regression',
+    'metric': 'mae',
+    'verbosity': -1,
+    'boosting_type': 'gbdt',
+    'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.1, log=True),
+    'max_depth': trial.suggest_int('max_depth', 3, 20),
+    'num_leaves': trial.suggest_int('num_leaves', 10, 200),
+    'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
+    'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),
+    'n_estimators': trial.suggest_int('n_estimators', 50, 500),
+    'min_child_samples': trial.suggest_int('min_child_samples', 5, 50),
+    'colsample_bytree': trial.suggest_float('colsample_bytree', 0.1, 1.0),
+    'verbose': -1,
+    'seed': SEED
     }
 
-    tf.keras.utils.set_random_seed(42)
+
     model = lgb.LGBMRegressor(**lgbm_params)
     model.fit(x, y)
  
@@ -468,39 +540,64 @@ def main(args):
 
 
     # get the best parameters ====================
-    study_nasa = optuna.create_study(direction="minimize")
-    study_nasa.optimize(lambda trial: lgb_optimize(trial, x, y, vx, vy), n_trials=params.num_trials, n_jobs=-1, show_progress_bar=True)
+    sampler = optuna.samplers.TPESampler(seed=SEED)
+    study_nasa = optuna.create_study(direction="minimize", sampler=sampler)
+    study_nasa.optimize(lambda trial: lgb_optimize(trial, x, y, vx, vy), n_trials=params.num_trials, n_jobs=1, show_progress_bar=True)
     best_hyperparameters = study_nasa.best_params
     print(f"Best hyperparameters: {best_hyperparameters}")
+    lgbm_params = {
+    'objective': 'regression',
+    'metric': 'mae',
+    'verbosity': -1,
+    'boosting_type': 'gbdt',
+    'verbose': -1,
+    'seed': SEED
+    }
+    best_hyperparameters.update(lgbm_params)
 
 
     # fit the model ====================
-    tf.keras.utils.set_random_seed(42)
     best_model = lgb.LGBMRegressor(**best_hyperparameters)
     best_model.fit(
         x,
         y,
         eval_set=[(x, y), (vx, vy)],
         eval_names=['train', 'valid'],
-        eval_metric=['l1','rmse'],
+        eval_metric=['mae'],
     )
     # record the evalution result
     evals_result = best_model.evals_result_
 
 
     # get the result and print ====================
-    final_train_loss = evals_result['train']['rmse'][-1]
+    final_train_loss = evals_result['train']['l1'][-1]
     final_train_mae = evals_result['train']['l1'][-1]
-    final_valid_loss = evals_result['valid']['rmse'][-1]
+    final_valid_loss = evals_result['valid']['l1'][-1]
     final_valid_mae = evals_result['valid']['l1'][-1]
     pred = best_model.predict(test_x, verbose=0)
-    test_loss = mean_squared_error(test_y, pred)
+    test_loss = mean_absolute_error(test_y, pred)
     test_mae = mean_absolute_error(test_y, pred)
     r2 = r2_score(test_y, pred)
 
-    print(f"Final Training Loss (RMSE): {final_train_loss}, MAE: {final_train_mae}")
-    print(f"Final Validation Loss (RMSE): {final_valid_loss}, MAE: {final_valid_mae}")
-    print(f"Final Test Loss (RMSE): {test_loss}, MAE: {test_mae}")
+    print(f"Final Training Loss (MAE): {final_train_loss}, MAE: {final_train_mae}")
+    print(f"Final Validation Loss (MAE): {final_valid_loss}, MAE: {final_valid_mae}")
+    print(f"Final Test Loss (MAE): {test_loss}, MAE: {test_mae}")
+    booster = best_model.booster_
+    model_dump = booster.dump_model()
+
+    def count_nodes(tree):
+        if 'left_child' in tree and 'right_child' in tree:
+            return 1 + count_nodes(tree['left_child']) + count_nodes(tree['right_child'])
+        else:
+            return 1
+
+    # Calculate the total number of nodes
+    num_nodes = sum(count_nodes(tree['tree_structure']) for tree in model_dump['tree_info'])
+
+
+    
+    print("Number of nodes: ", num_nodes)
+    print("Estimated memory usage: ", (num_nodes * 4 / 1024), "KB")
 
 
     # save the final best model ====================
