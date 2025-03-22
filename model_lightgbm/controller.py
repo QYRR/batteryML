@@ -36,7 +36,7 @@ def validate_paths():
 def run_experiments(parameters):
     """Run experiments iterating through parameters"""
     for param in parameters:
-        exec_times = 10
+        exec_times = 1
         for i in range(exec_times):
             print(f"\n=== Parameter {param}, Run {i+1}/{exec_times} started ===")
             

@@ -17,7 +17,8 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-tf.keras.utils.set_random_seed(42)
+SEED = 0
+tf.keras.utils.set_random_seed(SEED)
 
 
 # ==================== FUNCTION ====================
@@ -166,11 +167,12 @@ def main(args):
 
     # get the best parameters ====================
     input_shape = (params.sequence_length, len(params.features))
-    study = optuna.create_study(direction='minimize')
+    sampler = optuna.samplers.TPESampler(seed=SEED)
+    study = optuna.create_study(direction="minimize", sampler=sampler)
     study.optimize(
         lambda trial: bilstm_optmize(trial,train_samples,train_targets,valid_samples,valid_targets,input_shape),
         n_trials=params.n_trials,    # e.g., 10 trials; increase as needed
-        n_jobs=-1
+        n_jobs=1
     ) 
 
     best_params = study.best_params
@@ -181,6 +183,7 @@ def main(args):
     learning_rate = best_params['learning_rate']
     batch_size = best_params['batch_size']
 
+    tf.keras.utils.set_random_seed(42)
     final_model = create_bilstm_model(    
         hidden_size=hidden_size,
         learning_rate=learning_rate,
@@ -188,8 +191,7 @@ def main(args):
     )
 
 
-    # fit the model ====================
-    tf.keras.utils.set_random_seed(42)
+    # fit the model ====================    
     history = final_model.fit(
         train_samples,
         train_targets,
@@ -215,7 +217,7 @@ def main(args):
     print(f"Final Test Loss (MSE): {test_loss}, MAE: {test_mae}")
 
 
-    # save the final best model -----------------------------------------------------------------
+    # save the final best model ====================
     # model save path
     model_save_folder = Path(f'model_bilstm/model_{params.dataset}')
     model_save_folder.mkdir(parents=True, exist_ok=True)
