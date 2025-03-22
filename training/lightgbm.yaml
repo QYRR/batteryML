@@ -1,0 +1,53 @@
+# =============== stanford =======================
+# dataset: stanford          # select one
+# labels:
+#   - SOH
+# =============== stanford =======================
+
+# =============== nasa =======================
+dataset: nasa
+labels:
+  - capacity
+# =============== nasa =======================
+
+features:
+  - voltage       # Voltage feature
+  - temperature
+  - power
+  - current
+  - discharge_power_rate  # Discharge power feature
+  - discharge_current_rate
+  - discharge_voltage_rate
+  - sum_relativeTime
+  - range_voltage
+  - range_current
+  - range_temperature
+  - step_length
+  - duration
+  - delta_current
+  - delta_voltage
+  - delta_temperature
+#   # - energy
+#   # - discharge_energy_rate
+
+# features:
+#   - discharge_voltage_rate
+#   - voltage
+#   - range_temperature
+
+data_groupby:
+  - cycle
+
+num_trials: 200  # Number of trials for hyperparameter optimization
+
+overlap_mode: 'no'         # Overlap mode for time windows
+
+split_size: 20            # Size of each subgroup
+
+# multi_split_size: [10,20,30,50,70,100]
+multi_split_size: [5,10,15,20,30,40,50,70,100]
+# multi_split_size: [5,10,20,30,50]
+# multi_split_size: [3,5,7,10,15,20,30,40,50,70,100,130]
+
+num_restricted: 20        # Use the first <n> samples in a time window
+data_path: 'data/data_nasa'         # Path to the data
