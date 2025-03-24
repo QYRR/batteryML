@@ -24,7 +24,7 @@ n_trials: 20
 epochs: 30
 
 hidden_size: 14
-data_path: 'data/data_nasa'         # Path to the data
+data_path: 'data/data_nasa'         
 overlap: 0
 sequence_length: 20
 normalize: true

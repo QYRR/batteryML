@@ -96,7 +96,7 @@ def bilstm_optmize(
 
 def search():
     # Read the params
-    params = load_parameters("model_bilstm/parameters.yaml")
+    params = load_parameters("training/bilstm.yaml")
     (
         train_samples,
         train_targets,
