@@ -9,45 +9,31 @@ dataset: nasa
 labels:
   - capacity
 # =============== nasa =======================
-
-features:
+raw_features:
   - voltage       # Voltage feature
+  - current  
   - temperature
-  - power
-  - current
-  - discharge_power_rate  # Discharge power feature
-  - discharge_current_rate
-  - discharge_voltage_rate
-  - sum_relativeTime
-  - range_voltage
-  - range_current
-  - range_temperature
-  - step_length
-  - duration
-  - delta_current
-  - delta_voltage
-  - delta_temperature
-#   # - energy
-#   # - discharge_energy_rate
+  - relativeTime
 
-# features:
-#   - discharge_voltage_rate
-#   - voltage
-#   - range_temperature
+#feature_list:
+#  - all
+feature_list:
+  - mean_discharge_voltage_rate
+  - mean_voltage
+  - mean_temperature
+  - mean_power
 
 data_groupby:
   - cycle
 
 num_trials: 200  # Number of trials for hyperparameter optimization
 
-overlap_mode: 'no'         # Overlap mode for time windows
+overlap: 0         # Overlap mode for time windows
 
-split_size: 20            # Size of each subgroup
 
-# multi_split_size: [10,20,30,50,70,100]
-multi_split_size: [5,10,15,20,30,40,50,70,100]
-# multi_split_size: [5,10,20,30,50]
-# multi_split_size: [3,5,7,10,15,20,30,40,50,70,100,130]
+multi_split_size: [5, 10, 15, 20, 30, 40, 50, 70, 100]
+#multi_split_size: [20]
+test_split_size: 20
+normalize: true
 
-num_restricted: 20        # Use the first <n> samples in a time window
 data_path: 'data/data_nasa'         # Path to the data
