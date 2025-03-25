@@ -2,7 +2,7 @@ import numpy as np
 from scipy.integrate import cumulative_trapezoid
 
 
-def extract_features(data, raw_features, feature_list):
+def extract_features(data, raw_features, feature_list, return_names = False):
     RELATIVETIME = raw_features.index("relativeTime")
     CURRENT = raw_features.index("current")
     VOLTAGE = raw_features.index("voltage")
@@ -45,9 +45,9 @@ def extract_features(data, raw_features, feature_list):
         / 3600.0
     )
 
-    #features["duration"] = (
-    #    signals["relativeTime"][:, -1] - signals["relativeTime"][:, 0]
-    #)
+    features["duration"] = (
+        signals["relativeTime"][:, -1] - signals["relativeTime"][:, 0]
+    )
     features["wlen"] = np.ones(data.shape[0]) * data.shape[1]
 
     for idx, col_name in enumerate(raw_features):
@@ -88,5 +88,8 @@ def extract_features(data, raw_features, feature_list):
 
         feature_out.append(feature_val.reshape(data.shape[0], -1))
 
-    features = np.concatenate(feature_out, axis=1)
-    return features
+    features_out = np.concatenate(feature_out, axis=1)
+    if return_names:
+        return features_out, list(features.keys())
+    else:
+        return features_out
