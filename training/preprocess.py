@@ -52,7 +52,7 @@ def preprocess_and_window(data_path, window_length=20, overlap=0, normalize=Fals
             n = len(group_features)
 
             # Create the windows
-            for i in range(0, n - window_length, window_length - overlap):
+            for i in range(0, n - window_length + 1, window_length - overlap):
                 xlist.append(group_features[i:i + window_length])
                 ylist.append(group_labels[i + window_length - 1])
     
