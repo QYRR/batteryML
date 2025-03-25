@@ -25,9 +25,7 @@ def extract_features(data, raw_features, feature_list, return_names = False):
     signals["discharge_current_rate"] = np.diff(data[:, :, CURRENT], axis=1) / np.diff(
         signals["relativeTime"], axis=1
     )
-    signals["discharge_energy_rate"] = np.diff(signals["power"], axis=1) / np.diff(
-        signals["relativeTime"], axis=1
-    )
+
     signals["discharge_temperature_rate"] = np.diff(
         data[:, :, raw_features.index("temperature")], axis=1
     ) / np.diff(signals["relativeTime"], axis=1)
