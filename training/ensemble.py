@@ -65,7 +65,12 @@ def lgbm_optimize(trial, x, y, vx, vy):
  
     return mae
 
-
+def count_nodes(tree):
+    if 'left_child' in tree and 'right_child' in tree:
+        return 1 + count_nodes(tree['left_child']) + count_nodes(tree['right_child'])
+    else:
+        return 1
+    
 def search():
     params = load_parameters("training/lightgbm.yaml")
     train_samples = []
@@ -130,7 +135,17 @@ def search():
         eval_names=["train", "valid"],
         eval_metric=["mae"],
     )
+    
     print(f"Best hyperparameters: {best_hyperparameters}")
+    booster = best_model.booster_
+    model_dump = booster.dump_model()
+    # Calculate the total number of nodes
+    num_nodes = sum(count_nodes(tree['tree_structure']) for tree in model_dump['tree_info'])
+
+    print("-----------------------")
+    print("Number of nodes: ", num_nodes)
+    print("Estimated memory usage: ", (num_nodes * 8 / 1024), "KB")
+    print("-----------------------")
     print("Benchmarking...")
     for idx, split_length in enumerate(params.multi_split_size):
         test_pred = best_model.predict(test_samples[idx], verbose=0)

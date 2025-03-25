@@ -42,6 +42,11 @@ def extract_features(data, raw_features, feature_list, return_names = False):
         cumulative_trapezoid(data[:, :, CURRENT], x=signals["relativeTime"], axis=1)
         / 3600.0
     )
+    # Error dimension issues, signal has [:,:9], data has [:,:10]
+    '''dQ = np.gradient(signals['delta_current'], axis=1)
+    dV = np.gradient(data[:,:,VOLTAGE], axis=1)
+    dV_dQ = np.divide(dV, dQ, out=np.zeros_like(dV), where=dQ != 0)
+    signals['dV_dQ'] = dV_dQ'''
 
     features["duration"] = (
         signals["relativeTime"][:, -1] - signals["relativeTime"][:, 0]

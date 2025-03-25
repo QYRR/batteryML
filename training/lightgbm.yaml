@@ -23,8 +23,10 @@ raw_features:
 feature_list:
   - mean_discharge_voltage_rate
   - mean_voltage
-  - mean_temperature
+  - mean_discharge_temperature_rate
   - mean_power
+  - mean_relativeTime
+#  - mean_dV_dQ
 
 # New best features?
 # feature_list:
