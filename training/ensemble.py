@@ -17,6 +17,7 @@ from sklearn.metrics import (
 )
 import math
 from typing import Optional
+import pickle
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -208,6 +209,11 @@ def search():
         test_pred = best_model.predict(test_samples[idx], verbose=0)
         test_mae = mean_absolute_error(test_targets[idx], test_pred)
         print(f"Test MAE - WLEN= {split_length}: {test_mae}")
+    
+    # Save the model, with pickle
+    with open("models/lightgbm_model.pkl", "wb") as f:
+        pickle.dump(best_model, f)
+
 
 
 if __name__ == "__main__":
