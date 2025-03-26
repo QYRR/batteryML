@@ -68,7 +68,7 @@ void main()
 
     for(int i=0; i<N-1; i++)
     {
-        delta_current[i] = delta_current[i] /3600.0 * -1.0;
+        delta_current[i] = delta_current[i] / 3600.0 * -1.0;
     }    
 
     // test dQ
