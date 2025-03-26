@@ -95,12 +95,6 @@ void compute_features(float* voltage, float* current, float* temperature, float*
     'mean_discharge_temperature_rate', 'mean_power', 
     'mean_relativeTime', 'mean_dV_dQ'
     */
-    float mean_discharge_voltage_rate;
-    float mean_voltage;
-    float mean_discharge_temperature_rate;
-    float mean_power;
-    float mean_relativeTime;
-    float mean_dV_dQ;
 
     float sum_discharge_voltage_rate = 0;
     float sum_voltage = voltage[0];
@@ -142,12 +136,12 @@ void compute_features(float* voltage, float* current, float* temperature, float*
         sum_dV_dQ += dV[i-1] / dQ[i-1];
     }
 
-    mean_discharge_voltage_rate = sum_discharge_voltage_rate / (N-1);
-    mean_voltage = sum_voltage / N;
-    mean_discharge_temperature_rate = sum_discharge_temperature_rate / (N-1);
-    mean_power = sum_power / N;
-    mean_relativeTime = sum_relativeTime / N;
-    mean_dV_dQ = sum_dV_dQ / (N-1);
+    float mean_discharge_voltage_rate = sum_discharge_voltage_rate / (N-1);
+    float mean_voltage = sum_voltage / N;
+    float mean_discharge_temperature_rate = sum_discharge_temperature_rate / (N-1);
+    float mean_power = sum_power / N;
+    float mean_relativeTime = sum_relativeTime / N;
+    float mean_dV_dQ = sum_dV_dQ / (N-1);
 
     out_features[0] = mean_discharge_voltage_rate;
     out_features[1] = mean_voltage;
