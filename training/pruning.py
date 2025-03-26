@@ -56,7 +56,7 @@ def prune_trees(model_path):
     tree_predictions = run_inference_per_tree(
         model.booster_, test_samples[params.multi_split_size.index(20)]
     )
-    nodes_per_tree = [tree.num_leaves for tree in model.booster_.booster_.trees]
+    nodes_per_tree = []
 
     # Get the learning rate
     lr = model.learning_rate
@@ -86,7 +86,7 @@ def prune_trees(model_path):
     fig, ax1 = plt.subplots()
 
     # Primary x-axis (memory)
-    ax1.plot(memory, scores, "bo-", label="MAE vs Memory")
+    ax1.plot(memory, scores, "bo-", label="MAE vs Memory", markersize=3)
     ax1.set_xlabel("Memory Usage")
     ax1.set_ylabel("Mean Absolute Error (MAE)")
     ax1.hlines(

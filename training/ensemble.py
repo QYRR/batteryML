@@ -122,7 +122,9 @@ def load_params_and_data():
 
 
 def estimate_memory_usage(
-    model: lgbm.LGBMRegressor, limit_to_trees: Optional[list] = None
+    model: lgbm.LGBMRegressor,
+    limit_to_trees: Optional[list] = None,
+    nodes_per_tree: Optional[list] = None,
 ) -> float:
     """
     Return the estimated kB of memory usage for the model
@@ -134,9 +136,10 @@ def estimate_memory_usage(
     limit_to_trees : Optional[list], optional
         List of trees to consider, by default None (all trees)
 
+    nodes_per_tree : Optional[list], optional
+
+
     """
-    booster = model.booster_
-    model_dump = booster.dump_model()
 
     def count_nodes(tree):
         if "left_child" in tree and "right_child" in tree:
@@ -146,17 +149,20 @@ def estimate_memory_usage(
         else:
             return 1
 
+    booster = model.booster_
+    if nodes_per_tree is None:
+        nodes_per_tree = []
+    if nodes_per_tree == []:
+        model_dump = booster.dump_model()
+        nodi = [count_nodes(tree["tree_structure"]) for tree in model_dump["tree_info"]]
+        for num_node in nodi:
+            nodes_per_tree.append(num_node)
+
     # Calculate the total number of nodes
     if limit_to_trees is not None:
-        num_nodes = sum(
-            count_nodes(tree["tree_structure"])
-            for idx, tree in enumerate(model_dump["tree_info"])
-            if idx in limit_to_trees
-        )
+        num_nodes = sum(nodes_per_tree[idx] for idx in limit_to_trees)
     else:
-        num_nodes = sum(
-            count_nodes(tree["tree_structure"]) for tree in model_dump["tree_info"]
-        )
+        num_nodes = sum(nodes_per_tree)
 
     # Struct of nodes
     # 1. right child
