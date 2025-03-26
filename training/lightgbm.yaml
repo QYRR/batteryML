@@ -26,7 +26,8 @@ feature_list:
   - mean_discharge_temperature_rate
   - mean_power
   - mean_relativeTime
-#  - mean_dV_dQ
+#  - duration
+  - mean_dV_dQ
 
 # New best features?
 # feature_list:
@@ -40,12 +41,12 @@ feature_list:
 data_groupby:
   - cycle
 
-num_trials: 200  # Number of trials for hyperparameter optimization
+num_trials: 1000  # Number of trials for hyperparameter optimization
 
 overlap: 0         # Overlap mode for time windows
 
 
-multi_split_size: [10, 20, 30, 40, 50]
+multi_split_size: [5, 10, 20, 30, 40, 50]
 #multi_split_size: [20]
 test_split_size: 20
 normalize: true

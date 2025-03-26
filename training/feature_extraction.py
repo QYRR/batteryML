@@ -43,10 +43,11 @@ def extract_features(data, raw_features, feature_list, return_names = False):
         / 3600.0
     )
     # Error dimension issues, signal has [:,:9], data has [:,:10]
-    '''dQ = np.gradient(signals['delta_current'], axis=1)
-    dV = np.gradient(data[:,:,VOLTAGE], axis=1)
+    dQ = np.gradient(-1*signals['delta_current'], axis=1)
+    dV = np.gradient(data[:, :, VOLTAGE], axis=1)[:, :dQ.shape[1]]  # Match shapes
     dV_dQ = np.divide(dV, dQ, out=np.zeros_like(dV), where=dQ != 0)
-    signals['dV_dQ'] = dV_dQ'''
+    
+    signals['dV_dQ'] = dV_dQ
 
     features["duration"] = (
         signals["relativeTime"][:, -1] - signals["relativeTime"][:, 0]
@@ -59,6 +60,8 @@ def extract_features(data, raw_features, feature_list, return_names = False):
         ].min(axis=1)
         features[f"mean_{col_name}"] = np.mean(data[:, :, idx], axis=1)
         features[f"std_{col_name}"] = np.std(data[:, :, idx], axis=1)
+        features[f"max_{col_name}"] = np.max(data[:, :, idx], axis=-1)
+        features[f"min_{col_name}"] = np.min(data[:, :, idx], axis=-1)
         # Bad idea, it depends on wlen
         #features[f"sum_{col_name}"] = np.sum(data[:, :, idx], axis=1)
         features[f"diff_{col_name}"] = data[:, :, idx][:, -1] - data[:, :, idx][:, 0]
@@ -68,6 +71,8 @@ def extract_features(data, raw_features, feature_list, return_names = False):
             col_name
         ].min(axis=-1)
         features[f"mean_{col_name}"] = np.mean(signals[col_name], axis=-1)
+        features[f"max_{col_name}"] = np.max(signals[col_name], axis=-1)
+        features[f"min_{col_name}"] = np.min(signals[col_name], axis=-1)
         features[f"std_{col_name}"] = np.std(signals[col_name], axis=-1)
         #features[f"sum_{col_name}"] = np.sum(signals[col_name], axis=-1)
         features[f"diff_{col_name}"] = (
