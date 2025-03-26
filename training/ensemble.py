@@ -1,4 +1,5 @@
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 from cpu import set_cores
 import numpy as np
 
