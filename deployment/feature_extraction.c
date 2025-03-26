@@ -117,8 +117,10 @@ void compute_features(float* voltage, float* current, float* temperature, float*
     }
 
     // dQ
-    float* delta_current = (float*)malloc((N-1)*sizeof(float));
-    float* dQ = (float*)malloc((N-1)*sizeof(float));
+    // our device doesn't support 'malloc': 
+    // float* delta_current = (float*)malloc((N-1)*sizeof(float));
+    float delta_current[N];
+    float dQ[N];
     cumulative_trapezoid(time, current, delta_current, N);
     for(int i=0; i<N-1; i++)
     {
@@ -127,7 +129,7 @@ void compute_features(float* voltage, float* current, float* temperature, float*
     compute_gradient(delta_current, dQ, N-1);
 
     //dV
-    float* dV = (float*)malloc((N-1)*sizeof(float));
+    float dV[N];
     compute_gradient(voltage, dV, N);
 
 
