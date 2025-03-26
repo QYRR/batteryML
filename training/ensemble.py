@@ -50,14 +50,14 @@ def lgbm_optimize(trial, x, y, vx, vy):
 
     """
     lgbm_params = {
-        "learning_rate": trial.suggest_float("learning_rate", 0.0001, 0.1, log=True),
-        "max_depth": trial.suggest_int("max_depth", 3, 20),
-        "num_leaves": trial.suggest_int("num_leaves", 10, 200),
-        "reg_alpha": trial.suggest_float("reg_alpha", 1e-6, 1.0, log=True),
-        "reg_lambda": trial.suggest_float("reg_lambda", 1e-6, 1.0, log=True),
-        "n_estimators": trial.suggest_int("n_estimators", 50, 500),
-        "min_child_samples": trial.suggest_int("min_child_samples", 5, 50),
-        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.1, 1.0),
+        'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.1, log=True),
+        'max_depth': trial.suggest_int('max_depth', 3, 7),
+        'num_leaves': trial.suggest_int('num_leaves', 2, 25),
+        'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
+        'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),
+        'n_estimators': trial.suggest_int('n_estimators', 50, 450),
+        'min_child_samples': trial.suggest_int('min_child_samples', 2, 25),
+        'colsample_bytree': trial.suggest_float('colsample_bytree', 0.1, 1.0),
     }
 
     model = lgbm_model(**lgbm_params)
@@ -203,9 +203,19 @@ def search():
         eval_names=["train", "valid"],
         eval_metric=["mae"],
     )
+    
     print(f"Best hyperparameters: {best_hyperparameters}")
+    booster = best_model.booster_
+    model_dump = booster.dump_model()
+    # Calculate the total number of nodes
+    num_nodes = sum(count_nodes(tree['tree_structure']) for tree in model_dump['tree_info'])
+
+    print("-----------------------")
+    print("Number of nodes: ", num_nodes)
+    print("Estimated memory usage: ", (num_nodes * 8 / 1024), "KB")
+    print("-----------------------")
     print("Benchmarking...")
-    for idx, split_length in enumerate(params.multi_split_size):
+    for idx, split_length in enumerate(params.multi_split_size[1:], start=1):
         test_pred = best_model.predict(test_samples[idx], verbose=0)
         test_mae = mean_absolute_error(test_targets[idx], test_pred)
         print(f"Test MAE - WLEN= {split_length}: {test_mae}")
