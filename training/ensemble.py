@@ -46,8 +46,8 @@ def lgbm_optimize(trial, x, y, vx, vy):
 
     """
     lgbm_params = {
-        'learning_rate': trial.suggest_float('learning_rate', 0.0001, 0.1, log=True),
-        'max_depth': trial.suggest_int('max_depth', 3, 7),
+        'learning_rate': trial.suggest_float('learning_rate', 0.00001, 0.7, log=True),
+        'max_depth': trial.suggest_int('max_depth', 3, 8),
         'num_leaves': trial.suggest_int('num_leaves', 2, 25),
         'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
         'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),

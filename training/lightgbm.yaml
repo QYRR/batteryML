@@ -49,6 +49,6 @@ overlap: 0         # Overlap mode for time windows
 multi_split_size: [5, 10, 20, 30, 40, 50]
 #multi_split_size: [20]
 test_split_size: 20
-normalize: true
+normalize: false
 
 data_path: 'data/data_nasa'         # Path to the data
