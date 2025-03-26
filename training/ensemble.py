@@ -1,3 +1,4 @@
+import os
 from cpu import set_cores
 import numpy as np
 
@@ -222,6 +223,7 @@ def search():
         print(f"Test MAE - WLEN= {split_length}: {test_mae}")
 
     # Save the model, with pickle
+    os.makedirs("models", exist_ok=True)
     with open("models/lightgbm_model.pkl", "wb") as f:
         pickle.dump(best_model, f)
 
