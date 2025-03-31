@@ -1,24 +1,23 @@
+# training/ensemble.py
+
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = ""
-from cpu import set_cores
+import sys
+import argparse
 import numpy as np
 
 SEED = 0
 np.random.seed(SEED)
-set_cores(8)
 
+from cpu import set_cores
+set_cores(8)
 
 import lightgbm as lgbm
 import optuna
 
 from preprocess import preprocess_and_window, load_parameters
 from feature_extraction import extract_features
-
-from sklearn.metrics import (
-    mean_absolute_error,
-)
+from sklearn.metrics import mean_absolute_error
 import math
-from typing import Optional
 import pickle
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -71,163 +70,151 @@ def lgbm_optimize(trial, x, y, vx, vy):
     return mae
 
 
-def load_params_and_data():
-    params = load_parameters("training/lightgbm.yaml")
-    train_samples = []
-    train_targets = []
-    valid_samples = []
-    valid_targets = []
-    test_samples = []
-    test_targets = []
-
-    for sequence_length in params.multi_split_size:
-        (
-            train_s,
-            train_t,
-            valid_s,
-            valid_t,
-            test_s,
-            test_t,
-        ) = preprocess_and_window(
-            params.data_path,
-            sequence_length,
-            params.overlap,
-            params.normalize,
-            params.raw_features,
-            params.labels,
-        )
-
-        train_s = extract_features(train_s, params.raw_features, params.feature_list)
-        valid_s = extract_features(valid_s, params.raw_features, params.feature_list)
-        test_s = extract_features(test_s, params.raw_features, params.feature_list)
-
-        train_samples.append(train_s)
-        train_targets.append(train_t)
-        valid_samples.append(valid_s)
-        valid_targets.append(valid_t)
-        test_samples.append(test_s)
-        test_targets.append(test_t)
-
-    train_samples = np.concatenate(train_samples, axis=0)
-    valid_samples = np.concatenate(valid_samples, axis=0)
-    train_targets = np.concatenate(train_targets, axis=0)
-    valid_targets = np.concatenate(valid_targets, axis=0)
-    return (
-        params,
-        train_samples,
-        train_targets,
-        valid_samples,
-        valid_targets,
-        test_samples,
-        test_targets,
-    )
-
-
-def estimate_memory_usage(
-    model: lgbm.LGBMRegressor,
-    limit_to_trees: Optional[list] = None,
-    nodes_per_tree: Optional[list] = None,
-) -> float:
+def estimate_memory_usage(model: lgbm.LGBMRegressor):
     """
-    Return the estimated kB of memory usage for the model
-
-    Parameters
-    ----------
-    model : lgbm.LGBMRegressor
-
-    limit_to_trees : Optional[list], optional
-        List of trees to consider, by default None (all trees)
-
-    nodes_per_tree : Optional[list], optional
-
-
+    Roughly estimate the memory usage (KB) of a trained LightGBM model.
     """
+    booster = model.booster_
+    model_dump = booster.dump_model()
 
     def count_nodes(tree):
         if "left_child" in tree and "right_child" in tree:
-            return (
-                1 + count_nodes(tree["left_child"]) + count_nodes(tree["right_child"])
-            )
+            return 1 + count_nodes(tree["left_child"]) + count_nodes(tree["right_child"])
         else:
             return 1
 
-    booster = model.booster_
-    if nodes_per_tree is None:
-        nodes_per_tree = []
-    if nodes_per_tree == []:
-        model_dump = booster.dump_model()
-        nodi = [count_nodes(tree["tree_structure"]) for tree in model_dump["tree_info"]]
-        for num_node in nodi:
-            nodes_per_tree.append(num_node)
+    # Count total nodes in all trees
+    nodi = [count_nodes(tree["tree_structure"]) for tree in model_dump["tree_info"]]
+    num_nodes = sum(nodi)
 
-    # Calculate the total number of nodes
-    if limit_to_trees is not None:
-        num_nodes = sum(nodes_per_tree[idx] for idx in limit_to_trees)
-    else:
-        num_nodes = sum(nodes_per_tree)
-
-    # Struct of nodes
-    # 1. right child
-    child_mem = 32 if math.log2(num_nodes) > 16 else 16
-    feat_mem = 8
-    threshold_mem = 32  # Assume float32
-
-    # NOTE: I am excluding the input buffer size, it's an estimate
-    total_mem = num_nodes * (child_mem + feat_mem + threshold_mem)
-
-    return (total_mem / 8) / 1024
+    # Very rough memory estimate
+    child_mem = 32       # bits
+    feat_mem = 8         # bits
+    threshold_mem = 32   # bits
+    total_mem_bits = num_nodes * (child_mem + feat_mem + threshold_mem)
+    total_mem_kb = (total_mem_bits / 8) / 1024
+    return total_mem_kb
 
 
-def search():
-    (
-        params,
-        train_samples,
-        train_targets,
-        valid_samples,
-        valid_targets,
-        test_samples,
-        test_targets,
-    ) = load_params_and_data()
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, default=None,
+        help="Choose which dataset block to use in lightgbm.yaml (e.g. 'st' or 'randomized').")
+    args = parser.parse_args()
 
-    # Print the sizes of the datasets
-    print(f"Train samples: {train_samples.shape}")
-    print(f"Valid samples: {valid_samples.shape}")
+    # 1) Load all parameters from lightgbm.yaml (merges top-level + dataset block)
+    params = load_parameters("training/lightgbm.yaml", dataset_override=args.dataset)
+    # For convenience, store some variables
+    dataset_name = params.dataset
+    mw_sizes = params.multi_split_size if hasattr(params, "multi_split_size") else []
+    print("==========================================================")
+    print("   LightGBM Ensemble Training with Multiple Windows")
+    print("==========================================================")
+    print(f"Selected dataset: {dataset_name}")
+    print(f"Raw features  : {params.raw_features}")
+    print(f"Feature list  : {params.feature_list}")
+    print(f"Labels        : {params.labels}")
+    print(f"Data path     : {params.data_path}")
+    print(f"Overlap       : {params.overlap}, Normalize={params.normalize}")
+    print(f"Window sizes  : {mw_sizes}")
+    print("==========================================================\n")
+
+    # 2) For each window size in multi_split_size, we will create data + extract features
+    all_train_samples, all_train_targets = [], []
+    all_valid_samples, all_valid_targets = [], []
+    all_test_samples,  all_test_targets  = [], []
+
+    for wlen in mw_sizes:
+        print(f"--- Processing window_size={wlen} ---")
+        # Window the data
+        train_s, train_t, valid_s, valid_t, test_s, test_t = preprocess_and_window(
+            data_path=params.data_path,
+            sequence_length=wlen,
+            overlap=params.overlap,
+            normalize=params.normalize,
+            features=params.raw_features,
+            labels=params.labels,
+            data_groupby=params.data_groupby,  # e.g. ["cycle"] or ["filename","Date"]
+        )
+
+        # Convert raw windows into your final set of features
+        # (assuming you store final features in 'feature_list')
+        train_s = extract_features(train_s, params.raw_features, params.feature_list)
+        valid_s = extract_features(valid_s, params.raw_features, params.feature_list)
+        test_s  = extract_features(test_s, params.raw_features, params.feature_list)
+
+        # Print shapes for clarity
+        print(f"  Train split shape: {train_s.shape}, Valid split shape: {valid_s.shape}, Test split shape: {test_s.shape}")
+
+        # Collect them
+        all_train_samples.append(train_s)
+        all_train_targets.append(train_t)
+        all_valid_samples.append(valid_s)
+        all_valid_targets.append(valid_t)
+        all_test_samples.append(test_s)
+        all_test_targets.append(test_t)
+
+    # 3) Concatenate all window-based training sets into one big set
+    train_samples = np.concatenate(all_train_samples, axis=0)
+    train_targets = np.concatenate(all_train_targets, axis=0)
+    valid_samples = np.concatenate(all_valid_samples, axis=0)
+    valid_targets = np.concatenate(all_valid_targets, axis=0)
+
+    print("\n--- Combined Training Data ---")
+    print(f"train_samples shape: {train_samples.shape}")
+    print(f"valid_samples shape: {valid_samples.shape}")
+
+    # 4) Use Optuna to find best hyperparams on this combined data
     sampler = optuna.samplers.TPESampler(seed=SEED)
-    study_nasa = optuna.create_study(direction="minimize", sampler=sampler)
-    study_nasa.optimize(
-        lambda trial: lgbm_optimize(
-            trial, train_samples, train_targets, valid_samples, valid_targets
-        ),
+    study = optuna.create_study(direction="minimize", sampler=sampler)
+    print("\n=== Starting Optuna Hyperparam Search ===")
+    study.optimize(
+        lambda trial: lgbm_optimize(trial, train_samples, train_targets, valid_samples, valid_targets),
         n_trials=params.num_trials,
         n_jobs=1,
-        show_progress_bar=True,
+        show_progress_bar=True
     )
-    best_hyperparameters = study_nasa.best_params
-    best_model = lgbm_model(**best_hyperparameters)
-    best_model.fit(
+    best_params = study.best_params
+    print("\n=== Optuna Search Complete ===")
+    print("Best hyperparameters:", best_params)
+
+    # 5) Retrain final model with best hyperparams
+    print("\n--- Training Final LightGBM Model with Best Hyperparams ---")
+    final_model = lgbm_model(**best_params)
+    final_model.fit(
         train_samples,
         train_targets,
         eval_set=[(valid_samples, valid_targets)],
-        eval_names=["train", "valid"],
         eval_metric=["mae"],
     )
 
-    print(f"Best hyperparameters: {best_hyperparameters}")
-    # Calculate the total number of nodes
-    print("-----------------------")
-    print("Estimated memory usage: ", estimate_memory_usage(best_model), "KB")
-    print("-----------------------")
-    print("Benchmarking...")
-    for idx, split_length in enumerate(params.multi_split_size[1:], start=1):
-        test_pred = best_model.predict(test_samples[idx], verbose=0)
-        test_mae = mean_absolute_error(test_targets[idx], test_pred)
-        print(f"Test MAE - WLEN= {split_length}: {test_mae}")
+    # 6) Estimate memory usage
+    mem_kb = estimate_memory_usage(final_model)
+    print(f"Estimated final model memory usage: {mem_kb:.2f} KB")
 
-    # Save the model, with pickle
-    os.makedirs("models", exist_ok=True)
-    with open("models/lightgbm_model.pkl", "wb") as f:
-        pickle.dump(best_model, f)
+    # 7) Evaluate on each test set
+    print("\n--- Per-Window Test Performance ---")
+    test_maes = []
+    for idx, wlen in enumerate(mw_sizes[1:],start=1):
+        preds = final_model.predict(all_test_samples[idx])
+        mae  = mean_absolute_error(all_test_targets[idx], preds)
+        test_maes.append(mae)
+        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}")
+
+    # 8) Save final model
+    os.makedirs("models/lightgbm", exist_ok=True)
+    model_path = f"models/lightgbm/lgbm_{dataset_name}_model.pkl"
+    with open(model_path, "wb") as f:
+        pickle.dump(final_model, f)
+    print(f"\nFinal LightGBM model saved to: {model_path}")
+
+    # print("\n============================")
+    # print(f"Dataset: {dataset_name}")
+    # print("Final Test MAEs per window:")
+    # for w, m in zip(mw_sizes, test_maes):
+    #     print(f"  - window={w:2d}, MAE={m:.6f}")
+    # print("============================")
 
 
 if __name__ == "__main__":
-    search()
+    main()

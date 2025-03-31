@@ -1,61 +1,138 @@
-""" 
-Script to preprocess the nasa dataset
 """
-import glob
-import pandas as pd
+Script to preprocess battery data (e.g. st, randomized).
+It can handle reading train/valid/test CSVs, optional normalization,
+and windowing by arbitrary group columns.
+"""
+
 import os
-from sklearn.preprocessing import MinMaxScaler
-from types import SimpleNamespace
 import yaml
 import numpy as np
+import pandas as pd
+from types import SimpleNamespace
+from sklearn.preprocessing import MinMaxScaler
 
-def load_parameters(params_file_path:str) -> SimpleNamespace:
-    with open(params_file_path, 'r') as file:
-        para_dict = yaml.safe_load(file)
-    for key, value in para_dict.items():
-        print(f'{key}: {value}')
+def load_parameters(config_path, dataset_override=None):
+    """
+    Loads parameters from a YAML file. If the YAML contains a top-level
+    'dataset:' key plus a 'datasets:' sub-dict, merges the relevant sub-dict
+    with the top-level keys. If dataset_override is provided, that overrides
+    the 'dataset:' key in the file.
 
-    # create the namespace for parameters, use params.features to access
-    params = SimpleNamespace(**para_dict)
-    return params
+    Returns a SimpleNamespace with the merged config.
+    """
+    with open(config_path, "r") as f:
+        raw = yaml.safe_load(f)
 
-def preprocess_and_window(data_path, window_length=20, overlap=0, normalize=False, features = None, labels = None):
+    # If --dataset was passed, override the YAML's 'dataset' key
+    if dataset_override is not None:
+        raw["dataset"] = dataset_override
+
+    # If there's a "datasets" block, pick the correct sub-block
+    ds_key = raw.get("dataset", None)
+    if "datasets" in raw and ds_key in raw["datasets"]:
+        dataset_block = raw["datasets"][ds_key]
+        # Merge top-level keys with dataset block
+        merged = {**raw, **dataset_block}
+        # Remove the entire 'datasets' dict to avoid confusion
+        #merged.pop("datasets", None)
+        # Remove the 'dataset' key as it's no longer needed
+        #merged.pop("dataset", None)
+        return SimpleNamespace(**merged)
+    else:
+        # If no sub-block or none found, just convert entire YAML
+        return SimpleNamespace(**raw)
+
+
+def _group_and_window(df, features, labels, window_length, overlap, group_cols):
+    """
+    Helper to group a single dataframe by `group_cols` and produce
+    sliding windows of `window_length` with `overlap`.
+    """
+    xlist, ylist = [], []
+
+    # Group the dataframe by the specified columns
+    grouped = df.groupby(group_cols)
+
+    # For each group, create sliding windows
+    for _, group in grouped:
+        group_features = group[features].to_numpy()
+        group_labels = group[labels].to_numpy()
+        n = len(group_features)
+
+        # Slide with step = (window_length - overlap)
+        step = window_length - overlap if window_length > overlap else 1
+
+        for i in range(0, n - window_length + 1, step):
+            # Features: [i : i+window_length]
+            x_win = group_features[i : i + window_length]
+
+            # If labels has 1 column: take the last row's label
+            # If multiple label columns: take the entire last row
+            if group_labels.ndim == 1:
+                y_win = group_labels[i + window_length - 1]
+            else:
+                y_win = group_labels[i + window_length - 1, :]
+
+            xlist.append(x_win)
+            ylist.append(y_win)
+
+    return xlist, ylist
+
+
+def preprocess_and_window(
+    data_path,
+    sequence_length=20,
+    overlap=0,
+    normalize=False,
+    features=None,
+    labels=None,
+    data_groupby=None,
+):
+    """
+    Reads train/valid/test CSV files from `data_path`, applies optional
+    MinMax normalization on `features`, groups by `data_groupby`, then
+    creates sliding windows of length `sequence_length` with overlap.
+
+    Args:
+        data_path (str): Path to the folder containing train.csv, valid.csv, test.csv
+        sequence_length (int): Window length
+        overlap (int): Overlap size for sliding windows (0 = no overlap)
+        normalize (bool): Whether to apply MinMaxScaler to `features`
+        features (list[str]): List of feature column names
+        labels (list[str]): List of label column names
+        data_groupby (list[str]): Columns by which to group data (e.g. ["cycle"], ["filename", "Date"], etc.)
+
+    Returns:
+        (xtrain, ytrain, xvalid, yvalid, xtest, ytest) as NumPy arrays
+    """
+    # Default groupby if none provided
+    if not data_groupby:
+        data_groupby = ["cycle"]
+
+    # Read the CSVs
     train_df = pd.read_csv(os.path.join(data_path, "train.csv"))
     valid_df = pd.read_csv(os.path.join(data_path, "valid.csv"))
     test_df = pd.read_csv(os.path.join(data_path, "test.csv"))
 
-    # Normalize the data with MinMaxScaler
-    if normalize:
+    # Optionally normalize the feature columns
+    if normalize and features is not None:
         scaler = MinMaxScaler()
         train_df[features] = scaler.fit_transform(train_df[features])
         valid_df[features] = scaler.transform(valid_df[features])
         test_df[features] = scaler.transform(test_df[features])
-    
-    # Group by the "cycle" column and window the data
-    train_samples = []
-    valid_samples = []
-    test_samples = []
 
-    train_targets = []
-    valid_targets = []
-    test_targets = []
+    # Group & Window each split
+    train_samples, train_targets = _group_and_window(
+        train_df, features, labels, sequence_length, overlap, data_groupby
+    )
+    valid_samples, valid_targets = _group_and_window(
+        valid_df, features, labels, sequence_length, overlap, data_groupby
+    )
+    test_samples, test_targets = _group_and_window(
+        test_df, features, labels, sequence_length, overlap, data_groupby
+    )
 
-    for df, xlist, ylist in zip(
-        [train_df, valid_df, test_df],
-        [train_samples, valid_samples, test_samples],
-        [train_targets, valid_targets, test_targets]
-    ):
-        # For each cycle
-        for cycle in df['cycle'].unique():
-            group_features = df[df['cycle'] == cycle][features].to_numpy()
-            group_labels = df[df['cycle'] == cycle][labels].to_numpy()
-            n = len(group_features)
-
-            # Create the windows
-            for i in range(0, n - window_length + 1, window_length - overlap):
-                xlist.append(group_features[i:i + window_length])
-                ylist.append(group_labels[i + window_length - 1])
-    
+    # Convert lists to NumPy arrays
     xtrain = np.array(train_samples)
     ytrain = np.array(train_targets)
     xvalid = np.array(valid_samples)
@@ -63,9 +140,4 @@ def preprocess_and_window(data_path, window_length=20, overlap=0, normalize=Fals
     xtest = np.array(test_samples)
     ytest = np.array(test_targets)
 
-
     return xtrain, ytrain, xvalid, yvalid, xtest, ytest
-
-
-
-

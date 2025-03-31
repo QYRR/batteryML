@@ -1,54 +1,44 @@
-# =============== stanford =======================
-# dataset: stanford          # select one
-# labels:
-#   - SOH
-# =============== stanford =======================
+# training/lightgbm.yaml
 
-# =============== nasa =======================
-dataset: nasa
-labels:
-  - capacity
-# =============== nasa =======================
-raw_features:
-  - voltage       # Voltage feature
-  - current  
-  - temperature
-  - relativeTime
+#dataset: "st"   # or "randomized"
 
-# All features
-#feature_list:
-#  - all
+datasets:
+  st:
+    data_path: "data/st"
+    labels: ["capacity"]
+    raw_features: ["voltage", "current", "temperature", "relativeTime"]
+    feature_list:
+      - mean_discharge_voltage_rate
+      - mean_voltage
+      - mean_discharge_temperature_rate
+      - mean_power
+      - mean_relativeTime
+      - mean_dV_dQ
+    data_groupby: ["cycle"]
+    #data_path: "data/st"    # Path to the st dataset
+    overlap: 0
+    normalize: false
 
-# Original features
-feature_list:
-  - mean_discharge_voltage_rate
-  - mean_voltage
-  - mean_discharge_temperature_rate
-  - mean_power
-  - mean_relativeTime
-#  - duration
-  - mean_dV_dQ
+  randomized:
+    data_path: "data/randomized"
+    labels: ["SOH"]
+    raw_features: ["voltage", "current", "temperature", "relativeTime"]
+    feature_list:
+      - mean_discharge_voltage_rate
+      - mean_voltage
+      - mean_temperature
+      - mean_power
+      - mean_relativeTime
+      - mean_resistance
+      - min_voltage
+      - mean_dV_dQ
+      - max_dV_dQ
+    data_groupby: ["filename", "Date"]
+    #data_path: "data/randomized"  # Path to randomized dataset
+    overlap: 0
+    normalize: false
 
-# New best features?
-# feature_list:
-#   - mean_discharge_temperature_rate
-#   - range_discharge_temperature_rate
-#   - mean_discharge_temperature_rate
-#   - mean_voltage
-#   - std_relativeTime
-#   - duration
-
-data_groupby:
-  - cycle
-
-num_trials: 1000  # Number of trials for hyperparameter optimization
-
-overlap: 0         # Overlap mode for time windows
-
-
+# Common parameters for both datasets
+num_trials: 1000     # Number of trials for hyperparameter optimization
 multi_split_size: [5, 10, 20, 30, 40, 50]
-#multi_split_size: [20]
 test_split_size: 20
-normalize: false
-
-data_path: 'data/data_nasa'         # Path to the data
