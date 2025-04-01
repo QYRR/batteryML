@@ -16,9 +16,11 @@ import optuna
 
 from preprocess import preprocess_and_window, load_parameters
 from feature_extraction import extract_features
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, r2_score
 import math
 import pickle
+from eden.frontend.lightgbm import parse_boosting_trees
+from eden.model import Ensemble
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -70,29 +72,41 @@ def lgbm_optimize(trial, x, y, vx, vy):
     return mae
 
 
-def estimate_memory_usage(model: lgbm.LGBMRegressor):
+# def estimate_memory_usage(model: lgbm.LGBMRegressor):
+#     """
+#     Roughly estimate the memory usage (KB) of a trained LightGBM model.
+#     """
+#     booster = model.booster_
+#     model_dump = booster.dump_model()
+
+#     def count_nodes(tree):
+#         if "left_child" in tree and "right_child" in tree:
+#             return 1 + count_nodes(tree["left_child"]) + count_nodes(tree["right_child"])
+#         else:
+#             return 1
+
+#     # Count total nodes in all trees
+#     nodi = [count_nodes(tree["tree_structure"]) for tree in model_dump["tree_info"]]
+#     num_nodes = sum(nodi)
+
+#     # Very rough memory estimate
+#     child_mem = 32       # bits
+#     feat_mem = 8         # bits
+#     threshold_mem = 32   # bits
+#     total_mem_bits = num_nodes * (child_mem + feat_mem + threshold_mem)
+#     total_mem_kb = (total_mem_bits / 8) / 1024
+#     return total_mem_kb
+
+
+def get_memory_usage(model: lgbm.LGBMRegressor):
     """
-    Roughly estimate the memory usage (KB) of a trained LightGBM model.
+    Get the memory usage (KB) of a trained LightGBM model by eden.
     """
-    booster = model.booster_
-    model_dump = booster.dump_model()
+    emodel: Ensemble = parse_boosting_trees(model=model)
+    memory_cost = emodel.get_memory_cost()
+    total_mem_bytes = sum(memory_cost.values())
+    total_mem_kb = total_mem_bytes / 1024 
 
-    def count_nodes(tree):
-        if "left_child" in tree and "right_child" in tree:
-            return 1 + count_nodes(tree["left_child"]) + count_nodes(tree["right_child"])
-        else:
-            return 1
-
-    # Count total nodes in all trees
-    nodi = [count_nodes(tree["tree_structure"]) for tree in model_dump["tree_info"]]
-    num_nodes = sum(nodi)
-
-    # Very rough memory estimate
-    child_mem = 32       # bits
-    feat_mem = 8         # bits
-    threshold_mem = 32   # bits
-    total_mem_bits = num_nodes * (child_mem + feat_mem + threshold_mem)
-    total_mem_kb = (total_mem_bits / 8) / 1024
     return total_mem_kb
 
 
@@ -189,17 +203,16 @@ def main():
     )
 
     # 6) Estimate memory usage
-    mem_kb = estimate_memory_usage(final_model)
+    mem_kb = get_memory_usage(final_model)
     print(f"Estimated final model memory usage: {mem_kb:.2f} KB")
 
     # 7) Evaluate on each test set
     print("\n--- Per-Window Test Performance ---")
-    test_maes = []
     for idx, wlen in enumerate(mw_sizes[1:],start=1):
         preds = final_model.predict(all_test_samples[idx])
         mae  = mean_absolute_error(all_test_targets[idx], preds)
-        test_maes.append(mae)
-        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}")
+        r2 = r2_score(all_test_targets[idx], preds)
+        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}, r2={r2:.6f}")
 
     # 8) Save final model
     os.makedirs("models/lightgbm", exist_ok=True)
@@ -207,13 +220,6 @@ def main():
     with open(model_path, "wb") as f:
         pickle.dump(final_model, f)
     print(f"\nFinal LightGBM model saved to: {model_path}")
-
-    # print("\n============================")
-    # print(f"Dataset: {dataset_name}")
-    # print("Final Test MAEs per window:")
-    # for w, m in zip(mw_sizes, test_maes):
-    #     print(f"  - window={w:2d}, MAE={m:.6f}")
-    # print("============================")
 
 
 if __name__ == "__main__":

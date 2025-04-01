@@ -1,32 +1,28 @@
-# # =============== stanford =======================
-# dataset: stanford          # select one
-# labels:
-#   - SOH
-# # =============== stanford =======================
+# training/bilstm.yaml
 
-# =============== nasa =======================
-dataset: nasa
-labels:
-  - capacity
-# =============== nasa =======================
+#dataset: "nasa"  # or "stanford", "randomized", etc.
 
-features:
-  - voltage       # Voltage feature
-  - current  
-  - temperature
-  - relativeTime
+datasets:
+  st:
+    data_path: "data/st"
+    labels: ["capacity"]
+    features: ["voltage", "current", "temperature", "relativeTime"]
+    overlap: 0
+    data_groupby: ['cycle']
+  randomized:
+    data_path: "data/randomized"
+    labels: ["SOH"]  # or whichever you have
+    features: ["voltage", "current", "temperature", "relativeTime"]
+    overlap: 0
+    data_groupby: ['filename', 'Date']
+    
 
-data_groupby:
-  - cycle
-
-
+# Common settings
 n_trials: 20
 epochs: 30
-
 hidden_size: 14
-data_path: 'data/data_nasa'         
-overlap: 0
-sequence_length: 20
+sequence_length: 10       # default window size
 normalize: true
 
- 
+# If you want to train across multiple windows:
+multi_window_size: [10, 20, 30, 40, 50]
