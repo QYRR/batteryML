@@ -208,7 +208,7 @@ def main():
 
     # 7) Evaluate on each test set
     print("\n--- Per-Window Test Performance ---")
-    for idx, wlen in enumerate(mw_sizes[1:],start=1):
+    for idx, wlen in enumerate(mw_sizes):
         preds = final_model.predict(all_test_samples[idx])
         mae  = mean_absolute_error(all_test_targets[idx], preds)
         r2 = r2_score(all_test_targets[idx], preds)
