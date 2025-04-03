@@ -15,8 +15,7 @@ datasets:
       - mean_relativeTime
       - mean_dV_dQ
     data_groupby: ["cycle"]
-    #data_path: "data/st"    # Path to the st dataset
-    overlap: 0
+    overlap: 0.5
     normalize: false
 
   randomized:
@@ -40,5 +39,5 @@ datasets:
 
 # Common parameters for both datasets
 num_trials: 1000     # Number of trials for hyperparameter optimization
-multi_split_size: [5, 10, 20, 30, 40, 50]
+multi_split_size: [10, 20, 30, 40, 50, 60, 70]
 test_split_size: 20
