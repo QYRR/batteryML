@@ -42,9 +42,35 @@ def extract_features(data, raw_features, feature_list, return_names = False):
         cumulative_trapezoid(data[:, :, CURRENT], x=signals["relativeTime"], axis=1)
         / 3600.0
     )#[:,np.newaxis]
-    print(signals['relativeTime'][:,1:].shape, signals['delta_current'].shape)
-    signals["discharge_soc_rate"] = np.diff(signals["delta_current"], axis=1) / np.diff(
+    signals["discharge_soc_rate"] = np.diff(signals["delta_current"]*signals['delta_voltage'], axis=1) / np.diff(
         signals["relativeTime"][:,1:], axis=1
+    )
+    # Extract features related to battery aging
+    # Coulombic efficiency: ratio of charge extracted to charge input
+    features["coulombic_efficiency"] = (
+        signals["delta_current"][:, -1] / np.abs(signals["delta_current"][:, 0])
+    )
+
+    # Energy efficiency: ratio of energy output to energy input
+    features["energy_efficiency"] = (
+        signals["delta_power"][:, -1] / np.abs(signals["delta_power"][:, 0])
+    )
+
+    # Capacity fade: change in capacity over time
+    features["capacity_fade"] = signals["delta_current"][:, -1]
+
+    # Internal resistance growth: change in resistance over time
+    features["resistance_growth"] = signals["resistance"][:, -1] - signals["resistance"][:, 0]
+
+    # Voltage hysteresis: difference between charge and discharge voltages
+    features["voltage_hysteresis"] = (
+        np.max(data[:, :, VOLTAGE], axis=1) - np.min(data[:, :, VOLTAGE], axis=1)
+    )
+
+    # Temperature rise: change in temperature during discharge
+    features["temperature_rise"] = (
+        data[:, :, raw_features.index("temperature")][:, -1]
+        - data[:, :, raw_features.index("temperature")][:, 0]
     )
     # Error dimension issues, signal has [:,:9], data has [:,:10]
     dQ = np.gradient(-1*signals['delta_current'], axis=1)

@@ -15,7 +15,7 @@ datasets:
       - mean_relativeTime
       - mean_dV_dQ
     data_groupby: ["cycle"]
-    overlap: 0.5
+    overlap: 0
     normalize: false
 
   randomized:
@@ -32,12 +32,17 @@ datasets:
       - min_voltage
       #- max_voltage
       - mean_dV_dQ
-      - max_dV_dQ
-      - min_dV_dQ
+      #- max_temperature
+      #- min_temperature
+      #- min_dV_dQ
       - duration
-      - mean_discharge_temperature_rate
-      - mean_discharge_soc_rate
-      - mean_current
+      - coulombic_efficiency
+      - energy_efficiency
+      - capacity_fade
+      - resistance_growth
+      - voltage_hysteresis
+      - temperature_rise
+
     data_groupby: ["filename", "Date"]
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
@@ -45,5 +50,5 @@ datasets:
 
 # Common parameters for both datasets
 num_trials: 1000     # Number of trials for hyperparameter optimization
-multi_split_size: [10, 20, 30, 40, 50, 60, 70]
+multi_split_size: [5, 10, 20, 30, 40, 50]
 test_split_size: 20
