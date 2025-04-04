@@ -7,7 +7,7 @@ datasets:
     data_path: "data/st"
     labels: ["capacity"]
     features: ["voltage", "current", "temperature", "relativeTime"]
-    overlap: 0
+    overlap: 0.5
     data_groupby: ['cycle']
   randomized:
     data_path: "data/randomized"
@@ -25,4 +25,4 @@ sequence_length: 10       # default window size
 normalize: true
 
 # If you want to train across multiple windows:
-multi_window_size: [5, 10, 20, 30, 40, 50]
+multi_window_size: [10, 20, 30, 40, 50, 60, 70]

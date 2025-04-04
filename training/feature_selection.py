@@ -5,7 +5,7 @@ import numpy as np
 
 
 def feature_select():
-    params = load_parameters("training/lightgbm.yaml")
+    params = load_parameters("training/lightgbm.yaml", dataset_override='randomized')
     train_samples = []
     train_targets = []
     valid_samples = []
@@ -28,6 +28,7 @@ def feature_select():
             params.normalize,
             params.raw_features,
             params.labels,
+            params.data_groupby
         )
 
         train_s, fnames = extract_features(train_s, params.raw_features, ["all"], return_names=True)

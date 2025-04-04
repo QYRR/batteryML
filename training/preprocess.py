@@ -53,6 +53,7 @@ def _group_and_window(df, features, labels, window_length, overlap, group_cols):
     # Group the dataframe by the specified columns
     grouped = df.groupby(group_cols)
 
+    overlap_win = int(window_length * overlap) if overlap > 0 else 0
     # For each group, create sliding windows
     for _, group in grouped:
         group_features = group[features].to_numpy()
@@ -60,7 +61,7 @@ def _group_and_window(df, features, labels, window_length, overlap, group_cols):
         n = len(group_features)
 
         # Slide with step = (window_length - overlap)
-        step = window_length - overlap if window_length > overlap else 1
+        step = window_length - overlap_win if window_length > overlap_win else 1
 
         for i in range(0, n - window_length + 1, step):
             # Features: [i : i+window_length]
@@ -125,11 +126,13 @@ def preprocess_and_window(
     train_samples, train_targets = _group_and_window(
         train_df, features, labels, sequence_length, overlap, data_groupby
     )
+    # NOTE: Validation has no overlap
     valid_samples, valid_targets = _group_and_window(
-        valid_df, features, labels, sequence_length, overlap, data_groupby
+        valid_df, features, labels, sequence_length, 0, data_groupby
     )
+    # NOTE: Test set has no overlap
     test_samples, test_targets = _group_and_window(
-        test_df, features, labels, sequence_length, overlap, data_groupby
+        test_df, features, labels, sequence_length, 0, data_groupby
     )
 
     # Convert lists to NumPy arrays
