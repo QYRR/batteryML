@@ -15,6 +15,12 @@ datasets:
     features: ["voltage", "current", "temperature", "relativeTime"]
     overlap: 0
     data_groupby: ['filename', 'Date']
+  stanford:
+    data_path: "data/stanford"
+    labels: ["SOH"]  # or whichever you have
+    features: ["voltage", "current", "temperature", "relativeTime"]
+    overlap: 0
+    data_groupby: ['cell', 'cell']
     
 
 # Common settings

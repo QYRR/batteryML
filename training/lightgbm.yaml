@@ -47,7 +47,20 @@ datasets:
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
     normalize: false
-
+  stanford:
+    data_path: "data/stanford"
+    labels: ["SOH"]  # or whichever you have
+    raw_features: ["voltage", "current", "temperature", "relativeTime"]
+    feature_list:
+      - mean_discharge_voltage_rate
+      - mean_voltage
+      - mean_discharge_temperature_rate
+      - mean_power
+      - mean_relativeTime
+      - mean_dV_dQ
+    data_groupby: ['cell', 'cell']
+    overlap: 0
+    normalize: false
 # Common parameters for both datasets
 num_trials: 1000     # Number of trials for hyperparameter optimization
 multi_split_size: [5, 10, 20, 30, 40, 50]
