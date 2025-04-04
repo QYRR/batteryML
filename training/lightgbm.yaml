@@ -58,7 +58,7 @@ datasets:
       - mean_power
       - mean_relativeTime
       - mean_dV_dQ
-    data_groupby: ['cell', 'cell']
+    data_groupby: ['cell', 'cycle']
     overlap: 0
     normalize: false
 # Common parameters for both datasets

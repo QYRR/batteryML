@@ -20,7 +20,7 @@ datasets:
     labels: ["SOH"]  # or whichever you have
     features: ["voltage", "current", "temperature", "relativeTime"]
     overlap: 0
-    data_groupby: ['cell', 'cell']
+    data_groupby: ['cell', 'cycle']
     
 
 # Common settings
