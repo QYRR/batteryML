@@ -41,6 +41,10 @@ def extract_features(data, raw_features, feature_list, return_names = False):
     signals["delta_current"] = (
         cumulative_trapezoid(data[:, :, CURRENT], x=signals["relativeTime"], axis=1)
         / 3600.0
+    )#[:,np.newaxis]
+    print(signals['relativeTime'][:,1:].shape, signals['delta_current'].shape)
+    signals["discharge_soc_rate"] = np.diff(signals["delta_current"], axis=1) / np.diff(
+        signals["relativeTime"][:,1:], axis=1
     )
     # Error dimension issues, signal has [:,:9], data has [:,:10]
     dQ = np.gradient(-1*signals['delta_current'], axis=1)

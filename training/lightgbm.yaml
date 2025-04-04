@@ -31,8 +31,14 @@ datasets:
       - mean_relativeTime
       - mean_resistance
       - min_voltage
+      #- max_voltage
       - mean_dV_dQ
       - max_dV_dQ
+      - min_dV_dQ
+      - duration
+      - mean_discharge_temperature_rate
+      - mean_discharge_soc_rate
+      - mean_current
     data_groupby: ["filename", "Date"]
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
