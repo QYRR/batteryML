@@ -6,6 +6,23 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.feature_selection import RFE
 import lightgbm as lgbm
 from sklearn.pipeline import Pipeline
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+
+def make_pipeline(n_features, use_scaler=False):
+    steps = []
+    if use_scaler:
+        steps.append(("scaler", MinMaxScaler()))
+    steps.append(
+        ("rfe", 
+         RFE(estimator=lgbm.LGBMRegressor(verbosity=-1), 
+             n_features_to_select=n_features, 
+             step=1
+            )
+        )
+    )
+    return Pipeline(steps)
 
 
 def feature_select():
@@ -56,23 +73,10 @@ def feature_select():
     train_targets = np.concatenate(train_targets, axis=0)
     valid_targets = np.concatenate(valid_targets, axis=0)
 
-    # kb = SelectKBest(score_func=mutual_info_regression, k=10).fit(
-    #     train_samples, train_targets
-    # )
-    # scores = {fnames[i]: abs(kb.scores_[i]) for i in range(len(fnames))}
+    n_features = 18
+    pipe = make_pipeline(n_features, use_scaler=True)
 
-    # # Print the score for each feature, sorted by decreasing score
-    # for feature, score in sorted(scores.items(), key=lambda x: -x[1]):
-    #     print(f"{feature}: {score}")
-
-    pipe = Pipeline(
-        [
-            ("scaler", MinMaxScaler()),
-            ("rfe", RFE(estimator=lgbm.LGBMRegressor(), n_features_to_select=5, step=1)),
-        ]
-    )
-
-    pipe.fit(train_samples, train_targets)
+    pipe.fit(train_samples, train_targets.ravel())
     selected_mask = pipe.named_steps["rfe"].support_
     selected_features = [name for name, selected in zip(fnames, selected_mask) if selected]
 
