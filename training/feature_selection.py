@@ -102,7 +102,10 @@ def feature_select():
     )
 
     pipe.fit(train_samples, train_targets.ravel())
+<<<<<<< HEAD
     pipe.fit(train_samples, train_targets.ravel())
+=======
+>>>>>>> 131ede9 (Refactor training scripts and enhance feature extraction)
     selected_mask = pipe.named_steps["rfe"].support_
     selected_features = [name for name, selected in zip(fnames, selected_mask) if selected]'''
     # Convert train_samples and train_targets to DataFrame for compatibility

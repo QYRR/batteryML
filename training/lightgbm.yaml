@@ -23,6 +23,7 @@ datasets:
     labels: ["SOH"]
     raw_features: ["voltage", "current", "temperature", "relativeTime"]
     feature_list:
+<<<<<<< HEAD
       - mean_discharge_voltage_rate
       - mean_voltage
       - mean_temperature
@@ -49,6 +50,44 @@ datasets:
       - voltage_mad
       - cumulative_energy
       - cumulative_charge       
+=======
+      #- mean_discharge_voltage_rate
+      #- mean_voltage
+      #- mean_temperature
+      #- mean_power
+      #- mean_relativeTime
+      #- mean_resistance
+      #- min_voltage
+      #- mean_dV_dQ
+      #- duration
+      - total_energy
+      #- total_charge
+      - rms_voltage
+      #- rms_current
+      - voltage_entropy
+      #- current_entropy
+      - voltage_variance
+      #- current_variance
+      #- voltage_snr
+      #- current_snr
+      #- voltage_mad
+      - cumulative_energy
+      - cumulative_charge
+
+      - 'mean_discharge_temperature_rate'
+      - 'mean_discharge_voltage_rate'
+      #- 'min_temperature'
+      #- 'max_discharge_soc_rate'
+      #- 'mean_discharge_approx_soc_rate'
+      - 'mean_voltage'
+      - 'min_voltage'
+      - 'mean_power'
+      #- 'max_dV_dQ'
+      #- 'min_dV_dQ'
+      - 'mean_dV_dQ'
+      - 'mean_relativeTime'
+      - 'duration'                      
+>>>>>>> 131ede9 (Refactor training scripts and enhance feature extraction)
     data_groupby: ["filename", "Date"]
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
@@ -67,6 +106,9 @@ datasets:
       - mean_dV_dQ
       - duration
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 131ede9 (Refactor training scripts and enhance feature extraction)
       - total_energy
       - total_charge
       - rms_voltage
@@ -80,6 +122,7 @@ datasets:
       - voltage_mad
       - cumulative_energy
       - cumulative_charge
+<<<<<<< HEAD
 =======
       - coulombic_efficiency
       - energy_efficiency
@@ -88,6 +131,8 @@ datasets:
       - voltage_hysteresis
       - temperature_rise
 >>>>>>> e0bb6d2 (update stanford env)
+=======
+>>>>>>> 131ede9 (Refactor training scripts and enhance feature extraction)
     data_groupby: ['cell', 'cycle']
     overlap: 0
     normalize: false
