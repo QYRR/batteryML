@@ -9,7 +9,7 @@ SEED = 0
 np.random.seed(SEED)
 
 from cpu import set_cores
-set_cores(8)
+set_cores(4)
 
 import lightgbm as lgbm
 import optuna
@@ -17,11 +17,10 @@ import optuna
 from preprocess import preprocess_and_window, load_parameters
 from feature_extraction import extract_features
 from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
-import math
 import pickle
 from eden.frontend.lightgbm import parse_boosting_trees
 from eden.model import Ensemble
-
+import pandas as pd
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
 
@@ -34,7 +33,7 @@ def lgbm_model(**params):
         "boosting_type": "gbdt",
         "verbose": -1,
         "seed": SEED,
-        "n_jobs": 8,
+        "n_jobs": 4,
         "deterministic": True,
     }
     params.update(lgbm_params)
@@ -110,6 +109,17 @@ def get_memory_usage(model: lgbm.LGBMRegressor):
     return total_mem_kb
 
 
+def clean_after_feature_extraction(samples, targets, names=None):
+    # Remove rows with NaN values
+    temp_train = pd.DataFrame(samples, columns=names)
+    temp_train["target"] = targets
+    temp_train.replace([np.inf, -np.inf], np.nan, inplace=True)
+    temp_train.dropna(inplace=True)
+    samples = temp_train.values[:, :-1]
+    targets = temp_train.values[:, -1]
+    #print(targets)
+    return samples, targets
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default=None,
@@ -174,6 +184,8 @@ def main():
     valid_samples = np.concatenate(all_valid_samples, axis=0)
     valid_targets = np.concatenate(all_valid_targets, axis=0)
 
+    train_samples, train_targets = clean_after_feature_extraction(train_samples, train_targets)
+    valid_samples, valid_targets = clean_after_feature_extraction(valid_samples, valid_targets)
     print("\n--- Combined Training Data ---")
     print(f"train_samples shape: {train_samples.shape}")
     print(f"valid_samples shape: {valid_samples.shape}")
@@ -209,6 +221,9 @@ def main():
     # 7) Evaluate on each test set
     print("\n--- Per-Window Test Performance ---")
     for idx, wlen in enumerate(mw_sizes):
+        all_test_samples[idx], all_test_targets[idx] = clean_after_feature_extraction(
+            all_test_samples[idx], all_test_targets[idx]
+        )
         preds = final_model.predict(all_test_samples[idx])
         mae  = mean_absolute_error(all_test_targets[idx], preds)
         r2 = r2_score(all_test_targets[idx], preds)

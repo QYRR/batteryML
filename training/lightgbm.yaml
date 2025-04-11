@@ -30,23 +30,30 @@ datasets:
       - mean_relativeTime
       - mean_resistance
       - min_voltage
-      #- max_voltage
+      - max_voltage
       - mean_dV_dQ
-      #- max_temperature
-      #- min_temperature
-      #- min_dV_dQ
-      - duration
-      - coulombic_efficiency
-      - energy_efficiency
-      - capacity_fade
-      - resistance_growth
-      - voltage_hysteresis
-      - temperature_rise
-
+      - max_temperature
+      - min_temperature
+      - min_dV_dQ
+      #- duration
+      - total_energy
+      - total_charge
+      - rms_voltage
+      - rms_current
+      #- voltage_entropy
+      #- current_entropy
+      #- voltage_variance
+      #- current_variance
+      - voltage_snr
+      - current_snr
+      - voltage_mad
+      - cumulative_energy
+      - cumulative_charge       
     data_groupby: ["filename", "Date"]
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
     normalize: false
+
   stanford:
     data_path: "data/stanford"
     labels: ["SOH"]  # or whichever you have
@@ -58,10 +65,25 @@ datasets:
       - mean_power
       - mean_relativeTime
       - mean_dV_dQ
+      - duration
+      - total_energy
+      - total_charge
+      - rms_voltage
+      - rms_current
+      - voltage_entropy
+      - current_entropy
+      - voltage_variance
+      - current_variance
+      - voltage_snr
+      - current_snr
+      - voltage_mad
+      - cumulative_energy
+      - cumulative_charge
     data_groupby: ['cell', 'cycle']
     overlap: 0
     normalize: false
 # Common parameters for both datasets
 num_trials: 1000     # Number of trials for hyperparameter optimization
-multi_split_size: [5, 10, 20, 30, 40, 50]
+multi_split_size: [5, 10, 15, 20, 30, 40, 50]
 test_split_size: 20
+

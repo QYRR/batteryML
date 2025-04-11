@@ -67,7 +67,7 @@ def bilstm_optmize(
     """
     # Suggest hyperparameters
     learning_rate = trial.suggest_float("learning_rate", 1e-4, 1e-1, log=True)
-    batch_size = trial.suggest_categorical("batch_size", [16, 32, 64, 128, 256])
+    batch_size = trial.suggest_categorical("batch_size", [32, 64, 128, 256])
 
     # Build the model
     tf.keras.utils.set_random_seed(SEED)
