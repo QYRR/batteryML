@@ -66,6 +66,7 @@ datasets:
       - mean_relativeTime
       - mean_dV_dQ
       - duration
+<<<<<<< HEAD
       - total_energy
       - total_charge
       - rms_voltage
@@ -79,6 +80,14 @@ datasets:
       - voltage_mad
       - cumulative_energy
       - cumulative_charge
+=======
+      - coulombic_efficiency
+      - energy_efficiency
+      - capacity_fade
+      - resistance_growth
+      - voltage_hysteresis
+      - temperature_rise
+>>>>>>> e0bb6d2 (update stanford env)
     data_groupby: ['cell', 'cycle']
     overlap: 0
     normalize: false
