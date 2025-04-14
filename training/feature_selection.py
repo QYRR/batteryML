@@ -26,7 +26,7 @@ def clean_after_feature_extraction(samples, targets, names=None):
 
 
 def feature_select():
-    params = load_parameters("training/lightgbm.yaml", dataset_override='st')
+    params = load_parameters("training/lightgbm.yaml", dataset_override='randomized')
     train_samples = []
     train_targets = []
     valid_samples = []
@@ -102,10 +102,6 @@ def feature_select():
     )
 
     pipe.fit(train_samples, train_targets.ravel())
-<<<<<<< HEAD
-    pipe.fit(train_samples, train_targets.ravel())
-=======
->>>>>>> 131ede9 (Refactor training scripts and enhance feature extraction)
     selected_mask = pipe.named_steps["rfe"].support_
     selected_features = [name for name, selected in zip(fnames, selected_mask) if selected]'''
     # Convert train_samples and train_targets to DataFrame for compatibility
@@ -144,7 +140,7 @@ def feature_select():
     feature_importances = feature_importances.sort_values(ascending=False)
 
     # Select the top 8 features from permutation importance
-    top_perm_features = feature_importances.head(10)
+    top_perm_features = feature_importances.head(15)
     print("Top features from permutation importance:\n", top_perm_features)
 
     # Create the estimator for RFE
@@ -154,7 +150,7 @@ def feature_select():
     # Create the estimator for RFE
     estimator = ExtraTreesRegressor(n_jobs=4, random_state=0)
     # Set RFE to select the top 8 features
-    rfe_selector = RFE(estimator, n_features_to_select=10, step=1)
+    rfe_selector = RFE(estimator, n_features_to_select=15, step=1)
     rfe_selector = rfe_selector.fit(x_all, y_all)
 
     # Get the feature mask and the list of features selected by RFE
