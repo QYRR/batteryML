@@ -9,23 +9,26 @@ datasets:
     features: ["voltage", "current", "temperature", "relativeTime"]
     overlap: 0
     data_groupby: ['cycle']
+    date_col: "Date"
   randomized:
     data_path: "data/randomized"
     labels: ["SOH"]  # or whichever you have
     features: ["voltage", "current", "temperature", "relativeTime"]
     overlap: 0
     data_groupby: ['filename', 'Date']
+    date_col: "Date"
   stanford:
     data_path: "data/stanford"
     labels: ["SOH"]  # or whichever you have
     features: ["voltage", "current", "temperature", "relativeTime"]
     overlap: 0
     data_groupby: ['cell', 'cycle']
+    date_col: "Date"
     
 
 # Common settings
 n_trials: 20
-epochs: 50
+epochs: 30
 hidden_size: 14
 sequence_length: 10       # default window size
 normalize: true

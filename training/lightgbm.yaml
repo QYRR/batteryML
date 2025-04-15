@@ -17,63 +17,27 @@ datasets:
     data_groupby: ["cycle"]
     overlap: 0
     normalize: false
+    date_col: "Date"
 
   randomized:
     data_path: "data/randomized"
     labels: ["SOH"]
     raw_features: ["voltage", "current", "temperature", "relativeTime"]
     feature_list:
-      #- mean_discharge_voltage_rate
-      #- mean_voltage
-      #- mean_temperature
-      #- mean_power
-      #- mean_relativeTime
-      #- mean_resistance
-      #- min_voltage
-      #- mean_dV_dQ
-      #- duration
-      - total_energy
-      - total_charge
-      - rms_voltage
-      - rms_current
-      #- voltage_entropy
-      #- current_entropy
-      #- voltage_variance
-      #- current_variance
-      #- voltage_snr
-      #- current_snr
-      #- voltage_mad
-      #- cumulative_energy
-      #- cumulative_charge
-      
-      #- 'mean_discharge_temperature_rate'
-      #- 'mean_discharge_voltage_rate'
-      #- 'min_temperature'
-      #- 'max_discharge_soc_rate'
-      #- 'mean_discharge_approx_soc_rate'
-      #- 'mean_voltage'
-      #- 'min_voltage'
-      #- 'min_power'
-      #- 'max_dV_dQ'
-      #- 'min_dV_dQ'
-      #- 'mean_dV_dQ'
-      - 'mean_relativeTime'
-      #- 'duration'
-
-      - min_voltage
-      - min_dV_dQ
-      - min_temperature
-      - min_resistance
-      - max_temperature
-      - max_discharge_voltage_rate
-      - min_power
       - mean_discharge_voltage_rate
-      - mean_discharge_temperature_rate
+      - mean_voltage
+      - mean_temperature
+      - mean_power
+      - mean_relativeTime
+      - mean_resistance
+      - min_voltage
       - mean_dV_dQ
+      - max_dV_dQ
     data_groupby: ["filename", "Date"]
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
     normalize: false
+    date_col: "Date"
 
   stanford:
     data_path: "data/stanford"
@@ -103,6 +67,7 @@ datasets:
     data_groupby: ['cell', 'cycle']
     overlap: 0
     normalize: false
+    date_col: "Date"
 # Common parameters for both datasets
 num_trials: 1000     # Number of trials for hyperparameter optimization
 multi_split_size: [5, 10, 15, 20, 30, 40, 50]
