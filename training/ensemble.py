@@ -229,7 +229,7 @@ def main():
         r2 = r2_score(all_test_targets[idx], preds)
         rmse = root_mean_squared_error(all_test_targets[idx], preds)
         mse = mean_squared_error(all_test_targets[idx], preds)
-        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}, r2={r2:.6f}, RMSE={rmse:.6f}, MSE={rmse:.6f}")
+        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}, r2={r2:.6f}, RMSE={rmse:.6f}, MSE={mse:.6f}")
 
     # 8) Save final model
     os.makedirs("models/lightgbm", exist_ok=True)
