@@ -18,7 +18,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Input, LSTM, Bidirectional, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
-from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
+from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error, mean_squared_error
 
 import optuna
 optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -171,7 +171,8 @@ def train_for_one_window(params, window_size):
     test_mae = mean_absolute_error(test_targets, test_predictions)
     r2 = r2_score(test_targets, test_predictions)
     rmse = root_mean_squared_error(test_targets, test_predictions)
-    print(f"  [window={window_size}] Final Test MAE: {test_mae:.6f} r2: {r2:.6f} RMSE: {rmse:.6f}")
+    mse = mean_squared_error(test_targets, test_predictions)
+    print(f"  [window={window_size}] Final Test MAE: {test_mae:.6f} r2: {r2:.6f} RMSE: {rmse:.6f} MSE: {mse:.6f}")
 
     # 5) Save model
     dataset_name = params.dataset  # e.g. "st" or "randomized"
@@ -181,7 +182,7 @@ def train_for_one_window(params, window_size):
 
     print(f"  [window={window_size}] Model saved -> {model_path}")
 
-    return test_mae, best_params, r2, rmse
+    return test_mae, best_params, r2, rmse, mse
 
 
 def main():
@@ -226,14 +227,14 @@ def main():
     # 3) Train for each window and store results
     results = []
     for wlen in window_sizes:
-        test_mae, best_params, r2, rmse = train_for_one_window(params, wlen)
-        results.append((wlen, test_mae, best_params, r2, rmse))
+        test_mae, best_params, r2, rmse, mse = train_for_one_window(params, wlen)
+        results.append((wlen, test_mae, best_params, r2, rmse, mse))
 
     # 4) Print final summary
     print("\n================ FINAL SUMMARY ================")
     print(f"Dataset: {params.dataset}")
-    for (wlen, mae, bpar, r2, rmse) in results:
-        print(f" - Window={wlen:2d} | Test MAE={mae:.6f} | r2={r2:.6f} | RMSE={rmse:.6f}| Best Params={bpar}")
+    for (wlen, mae, bpar, r2, rmse, mse) in results:
+        print(f" - Window={wlen:2d} | Test MAE={mae:.6f} | r2={r2:.6f} | RMSE={rmse:.6f} | MSE={mse:.6f}| Best Params={bpar}")
     print("===============================================")
 
 
