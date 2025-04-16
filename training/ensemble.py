@@ -16,7 +16,7 @@ import optuna
 
 from preprocess import preprocess_and_window, load_parameters
 from feature_extraction import extract_features
-from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error
+from sklearn.metrics import mean_absolute_error, r2_score, root_mean_squared_error, mean_squared_error
 import pickle
 from eden.frontend.lightgbm import parse_boosting_trees
 from eden.model import Ensemble
@@ -228,7 +228,8 @@ def main():
         mae  = mean_absolute_error(all_test_targets[idx], preds)
         r2 = r2_score(all_test_targets[idx], preds)
         rmse = root_mean_squared_error(all_test_targets[idx], preds)
-        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}, r2={r2:.6f}, RMSE={rmse:.6f}")
+        mse = mean_squared_error(all_test_targets[idx], preds)
+        print(f"  Window={wlen:2d} => Test MAE={mae:.6f}, r2={r2:.6f}, RMSE={rmse:.6f}, MSE={rmse:.6f}")
 
     # 8) Save final model
     os.makedirs("models/lightgbm", exist_ok=True)
