@@ -28,7 +28,7 @@ datasets:
 
 # Common settings
 n_trials: 20
-epochs: 53
+epochs: 70
 hidden_size: 14
 sequence_length: 10       # default window size
 normalize: true
