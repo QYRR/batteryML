@@ -146,7 +146,7 @@ def preprocess_and_window(
     return xtrain, ytrain, xvalid, yvalid, xtest, ytest
 
 
-def get_first_window_test_set(data_path, sequence_length=20, features=None, labels=None, data_groupby=None):
+def get_first_window_test_set(data_path, start_len=0, end_len=20, features=None, labels=None, data_groupby=None, scaler = None):
     """
     Reads the test CSV file from `data_path`, groups by `data_groupby`,
     and extracts only the first sliding window of length `sequence_length`
@@ -168,8 +168,9 @@ def get_first_window_test_set(data_path, sequence_length=20, features=None, labe
 
     # Read the test CSV
     test_df = pd.read_csv(os.path.join(data_path, "test.csv"))
-
+    sequence_length = end_len - start_len
     xlist, ylist = [], []
+    xbilstm = []
 
     # Group the dataframe by the specified columns
     grouped = test_df.groupby(data_groupby)
@@ -178,26 +179,30 @@ def get_first_window_test_set(data_path, sequence_length=20, features=None, labe
     for _, group in grouped:
         group_features = group[features].to_numpy()
         group_labels = group[labels].to_numpy()
+        group_bilstm = scaler.transform(group_features)    
 
-        if len(group_features) >= sequence_length:
+        if len(group_features) >= sequence_length and len(group_features[start_len:end_len]) == sequence_length:
             # Features: first `sequence_length` rows
-            x_win = group_features[:sequence_length]
+            x_win = group_features[start_len:end_len]
 
             # If labels has 1 column: take the last row's label
             # If multiple label columns: take the entire last row
             if group_labels.ndim == 1:
-                y_win = group_labels[sequence_length - 1]
+                y_win = group_labels[end_len - 1]
             else:
-                y_win = group_labels[sequence_length - 1, :]
+                y_win = group_labels[end_len - 1, :]
 
             xlist.append(x_win)
+            xbilstm.append(group_bilstm[start_len:end_len])
             ylist.append(y_win)
+
 
     # Convert lists to NumPy arrays
     xtest = np.array(xlist, dtype=np.float32)
+    xbilstm = np.array(xbilstm, dtype=np.float32)
     ytest = np.array(ylist, dtype=np.float32)
 
-    return xtest, ytest
+    return xtest, xbilstm, ytest
 
 
 def _group_and_window_with_dates(df, features, labels, date_col, window_length, overlap, group_cols):
