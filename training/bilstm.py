@@ -141,7 +141,7 @@ def train_for_one_window(params, window_size):
             epochs=params.epochs
         ),
         n_trials=params.n_trials,
-        n_jobs=7,
+        n_jobs=1,
         show_progress_bar=True
     )
 
