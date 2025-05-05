@@ -28,10 +28,10 @@ datasets:
 
 # Common settings
 n_trials: 20
-epochs: 70
+epochs: 45
 hidden_size: 14
 sequence_length: 10       # default window size
 normalize: true
 
 # If you want to train across multiple windows:
-multi_window_size: [5, 10, 20, 30, 40, 50]
+multi_window_size: [20, 30, 40, 50, 60]

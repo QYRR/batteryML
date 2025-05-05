@@ -33,7 +33,7 @@ def lgbm_model(**params):
         "boosting_type": "gbdt",
         "verbose": -1,
         "seed": SEED,
-        "n_jobs": 4,
+        "n_jobs": 1,
         "deterministic": True,
     }
     params.update(lgbm_params)
@@ -232,8 +232,8 @@ def main():
         print(f"  Window={wlen:2d} => Test MAE={mae:.6f}, r2={r2:.6f}, RMSE={rmse:.6f}, MSE={mse:.6f}")
 
     # 8) Save final model
-    os.makedirs("models/lightgbm", exist_ok=True)
-    model_path = f"models/lightgbm/lgbm_{dataset_name}_model.pkl"
+    os.makedirs("result/models/lightgbm", exist_ok=True)
+    model_path = f"result/models/lightgbm/lgbm_{dataset_name}_model.pkl"
     with open(model_path, "wb") as f:
         pickle.dump(final_model, f)
     print(f"\nFinal LightGBM model saved to: {model_path}")

@@ -1,5 +1,0 @@
-If you want to train a lightgbm model, the processing is 
-1 -> change the parameters "multi_split_size" and "test_wlen" in "parameters.ymal"
-2 -> run "feature_extraction.ipynb" to generate new training and testing data. 
-3 -> run "controller.py" to train a model
-4 -> find the result in "result_new1.csv"

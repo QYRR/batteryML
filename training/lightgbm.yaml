@@ -13,7 +13,19 @@ datasets:
       - mean_discharge_temperature_rate
       - mean_power
       - mean_relativeTime
+      #- mean_resistance
+      #- min_voltage
       - mean_dV_dQ
+      - max_dV_dQ
+      - min_dV_dQ
+      - duration
+      - mean_temperature
+      #- total_energy
+      #- total_charge
+      #- rms_voltage
+      #- rms_current
+      #- voltage_entropy
+      #- current_entropy
     data_groupby: ["cycle"]
     overlap: 0
     normalize: false
@@ -26,13 +38,22 @@ datasets:
     feature_list:
       - mean_discharge_voltage_rate
       - mean_voltage
-      - mean_temperature
+      - mean_discharge_temperature_rate
       - mean_power
       - mean_relativeTime
-      - mean_resistance
-      - min_voltage
+      #- mean_resistance
+      #- min_voltage
       - mean_dV_dQ
       - max_dV_dQ
+      - min_dV_dQ
+      - duration
+      - mean_temperature
+      #- total_energy
+      #- total_charge
+      #- rms_voltage
+      #- rms_current
+      #- voltage_entropy
+      #- current_entropy
     data_groupby: ["filename", "Date"]
     #data_path: "data/randomized"  # Path to randomized dataset
     overlap: 0
@@ -70,5 +91,5 @@ datasets:
     date_col: "Date"
 # Common parameters for both datasets
 num_trials: 1000     # Number of trials for hyperparameter optimization
-multi_split_size: [5, 10, 15, 20, 30, 40, 50]
+multi_split_size: [20, 30, 40, 50, 60]
 test_split_size: 20

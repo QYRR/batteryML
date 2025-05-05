@@ -1,4 +1,74 @@
 import numpy as np
+"""
+Extract features from battery data for machine learning and analysis.
+This function computes a variety of features from raw battery data, including
+time-series signals, statistical metrics, and battery health indicators. These
+features are useful for tasks such as state-of-health (SOH) estimation, state-of-charge
+(SOC) estimation, and battery aging analysis.
+Parameters:
+    data (numpy.ndarray): A 3D array of shape (n_windows, wlen, n_features) containing
+        the raw battery data. Each window corresponds to a segment of the data, and
+        each feature corresponds to a specific measurement (e.g., voltage, current).
+    raw_features (list): A list of strings representing the names of the raw features
+        in the data array (e.g., ["relativeTime", "current", "voltage", "temperature"]).
+    feature_list (list): A list of feature names to extract. If set to ["all"], all
+        available features will be extracted.
+    return_names (bool, optional): If True, the function will return the names of the
+        extracted features along with the feature values. Default is False.
+Returns:
+    numpy.ndarray: A 2D array of shape (n_windows, n_extracted_features) containing
+        the extracted feature values for each window.
+    list (optional): A list of strings representing the names of the extracted features
+        (only returned if `return_names` is True).
+Features Extracted:
+    - Time-series signals:
+        - relativeTime: Time relative to the start of the window.
+        - power: Instantaneous power (current * voltage).
+        - resistance: Instantaneous resistance (voltage / current).
+        - discharge_power_rate: Rate of change of power during discharge.
+        - discharge_voltage_rate: Rate of change of voltage during discharge.
+        - discharge_current_rate: Rate of change of current during discharge.
+        - discharge_temperature_rate: Rate of change of temperature during discharge.
+        - delta_power, delta_voltage, delta_current: Cumulative changes in power,
+          voltage, and current over time.
+        - discharge_soc_rate: Rate of change of state-of-charge during discharge.
+        - approx_C_rate: Approximate C-rate (current normalized by capacity).
+        - approx_SOC: Approximate state-of-charge.
+        - discharge_approx_soc_rate: Rate of change of approximate SOC.
+        - dV_dQ, dVt_dQt: Voltage-to-charge gradients.
+    - Battery health indicators:
+        - coulombic_efficiency: Ratio of charge extracted to charge input.
+        - energy_efficiency: Ratio of energy output to energy input.
+        - capacity_fade: Change in capacity over time.
+        - resistance_growth: Change in internal resistance over time.
+        - voltage_hysteresis: Difference between charge and discharge voltages.
+        - temperature_rise: Change in temperature during discharge.
+    - Statistical metrics:
+        - duration: Duration of the window.
+        - wlen: Window length.
+        - total_energy: Total energy delivered during discharge.
+        - total_charge: Total charge delivered during discharge.
+        - rms_voltage, rms_current: Root mean square of voltage and current.
+        - voltage_entropy, current_entropy: Entropy of voltage and current signals.
+        - voltage_peak_to_peak, current_peak_to_peak: Peak-to-peak amplitude of voltage
+          and current.
+        - voltage_skewness, current_skewness: Skewness of voltage and current signals.
+        - voltage_kurtosis, current_kurtosis: Kurtosis of voltage and current signals.
+        - voltage_variance, current_variance: Variance of voltage and current signals.
+        - voltage_snr, current_snr: Signal-to-noise ratio of voltage and current.
+        - voltage_mad: Mean absolute deviation of voltage.
+        - cumulative_energy, cumulative_charge: Cumulative energy and charge delivered
+          during discharge.
+    - Feature statistics for raw and derived signals:
+        - range_<feature>: Range (max - min) of the feature.
+        - mean_<feature>: Mean value of the feature.
+        - std_<feature>: Standard deviation of the feature.
+        - max_<feature>: Maximum value of the feature.
+        - min_<feature>: Minimum value of the feature.
+        - diff_<feature>: Difference between the last and first values of the feature.
+
+
+"""
 from scipy.integrate import cumulative_trapezoid
 from scipy.stats import entropy
 
@@ -43,7 +113,7 @@ def extract_features(data, raw_features, feature_list, return_names = False):
         / 3600.0
     )#[:,np.newaxis]
     #signals['delta_capacity'] = -1.0 * np.concatenate([[0], cumulative_trapezoid(group['current'].values, x=group['relativeTime'].values/3600.0)])
-    signals["discharge_soc_rate"] = np.diff(signals["delta_current"]*signals['delta_voltage'], axis=1) / np.diff(
+    signals["discharge_soc_rate"] = np.diff(signals["delta_current"], axis=1) / np.diff(
         signals["relativeTime"][:,1:], axis=1
     )
     # Calculate the pseudo state of charge (SOC) and discharge rate
@@ -216,3 +286,5 @@ def extract_features(data, raw_features, feature_list, return_names = False):
         return features_out, list(features.keys())
     else:
         return features_out
+    
+
