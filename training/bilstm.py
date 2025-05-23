@@ -124,32 +124,15 @@ def train_for_one_window(params, window_size):
     # Print some shape info for clarity
     print(f"  Training set size: {len(train_samples)}  Validation set size: {len(valid_samples)}  Test set size: {len(test_samples)}")
 
-    # 2) Optuna hyperparam search
-    sampler = optuna.samplers.TPESampler(seed=SEED)
-    study = optuna.create_study(direction="minimize", sampler=sampler)
+    # 2) Optuna hyperparam search    
 
-    input_shape = (window_size, len(params.features))
-    study.optimize(
-        lambda trial: bilstm_optmize(
-            trial,
-            train_samples,
-            train_targets,
-            valid_samples,
-            valid_targets,
-            input_shape,
-            hidden_size=params.hidden_size,
-            epochs=params.epochs
-        ),
-        n_trials=params.n_trials,
-        n_jobs=1,
-        show_progress_bar=True
-    )
-
-    best_params = study.best_params
-    print(f"  [window={window_size}] Best hyperparameters from Optuna: {best_params}")
-
-    # 3) Retrain final model with best hyperparams
+    # 3) Train final model with best hyperparams
     tf.keras.utils.set_random_seed(SEED)
+    best_params = {
+        "learning_rate": 0.01,
+        "batch_size": 16
+    }
+    input_shape = (window_size, len(params.features))   
     best_model = create_bilstm_model(
         params.hidden_size,
         best_params["learning_rate"],
@@ -176,8 +159,8 @@ def train_for_one_window(params, window_size):
 
     # 5) Save model
     dataset_name = params.dataset  # e.g. "st" or "randomized"
-    os.makedirs("models/bilstm", exist_ok=True)
-    model_path = f"models/bilstm/{dataset_name}_bilstm_win{window_size}.h5"
+    os.makedirs("result/models/bilstm", exist_ok=True)
+    model_path = f"result/models/bilstm/{dataset_name}_bilstm_win{window_size}.h5"
     best_model.save(model_path)
 
     print(f"  [window={window_size}] Model saved -> {model_path}")
